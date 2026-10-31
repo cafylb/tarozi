@@ -2,7 +2,7 @@
 
 ## Помощник
 
-Кнопка «Помощник» открывает чат на RU/EN/UZ. Поиск использует демонстрационный каталог Tarozi и сортирует предложения по стоимости товаров с доставкой. Карточка позволяет выбрать товар, поставщика и количество в интерфейсе, без оформления заказа.
+Раздел Chat в header открывает отдельную страницу помощника на RU/EN/UZ. Переписка сохраняется при переходах между разделами; плавающей кнопки и модального окна нет. Поиск использует демонстрационный каталог Tarozi и сортирует предложения по стоимости товаров с доставкой. Карточка позволяет выбрать товар, поставщика и количество в интерфейсе, без оформления заказа.
 
 Для свободных ИИ-ответов указать `GEMINI_API_KEY` в `.env.local`. Модель по умолчанию — `gemini-3.5-flash-lite`, её можно задать через `GEMINI_MODEL`. Использовать ключ проекта Free Tier, если цель — бесплатное демо: подписки ChatGPT Plus и Google AI Pro не являются API-биллингом. Ключ остаётся на сервере. Приложение не включает биллинг и не переключается на платный провайдер при ошибках.
 
@@ -37,3 +37,4 @@ Google client ID и secret загружаются сервером из `.env.lo
 The separate [backend](backend/README.md) adds a Fastify/TypeScript API, Supabase/PostgreSQL schema, seller approval, dated offers/history, Restock Advisor, private saved lists, alerts and moderation. See [API integration](backend/docs/API.md) for connecting the frontend. Its Supabase bearer sessions are separate from the existing local demo account cookies. No existing accounts or secrets are migrated automatically.
 
 Run its offline checks with `cd backend && npm ci && npm run check`. A configured Supabase project or local Supabase stack is needed to run the persistent API; cloud hosting is not provisioned by the source code alone.
+Иконки интерфейса: Phosphor (SVG и `@phosphor-icons/react`), включая робота помощника. Полоса товаров использует отдельные переключатели с выбранным товаром; видимая полоса прокрутки страницы скрыта, прокрутка доступна.

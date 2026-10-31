@@ -26,7 +26,7 @@ const navigation = [
   { id: 'cart', label: 'Моя закупка', icon: 'shopping-bag' },
   { id: 'favorites', label: 'Избранное', icon: 'heart' },
   { id: 'alerts', label: 'Оповещения', icon: 'bell' },
-  { id: 'chat', label: 'Чат', icon: 'receipt' }
+  { id: 'chat', label: 'Чат', icon: 'robot' }
 ];
 const activeProduct = () => byId(state.productId);
 const availableOffers = () => offersFor(activeProduct(), state.market);
@@ -45,7 +45,7 @@ function navigationButtons(mode = 'sidebar') {
     const active = state.page === item.id;
     if (mode === 'rail') return `<button class="rail-button ${active ? 'active' : ''}" data-action="view" data-view="${item.id}" aria-label="${item.label}" title="${item.label}" ${active ? 'aria-current="page"' : ''}>${icon(item.icon)}</button>`;
     if (mode === 'compact') return `<button data-action="view" data-view="${item.id}" class="${active ? 'active' : ''}" title="${item.label}" aria-label="${item.label}" ${active ? 'aria-current="page"' : ''}>${icon(item.icon)}</button>`;
-    if (mode === 'top') return `<button data-action="view" data-view="${item.id}" class="${active ? 'active' : ''}" ${active ? 'aria-current="page"' : ''}>${item.label}${item.id === 'cart' ? ` <span class="num">${state.cart.length}</span>` : ''}</button>`;
+    if (mode === 'top') return `<button data-action="view" data-view="${item.id}" class="${active ? 'active' : ''}" ${active ? 'aria-current="page"' : ''}>${item.label}</button>`;
     return `<button class="nav-button ${active ? 'active' : ''}" data-action="view" data-view="${item.id}" ${active ? 'aria-current="page"' : ''}>${icon(item.icon)}<span>${item.label}</span>${item.id === 'cart' && state.cart.length ? `<span class="count num">${state.cart.length}</span>` : ''}</button>`;
   }).join('');
 }
@@ -114,7 +114,7 @@ function marketStudio() {
   const delta = change(product);
   const title = state.page === 'favorites' ? 'То, что всегда под рукой' : 'Закупка на сегодня';
   const difference = Math.max(...product.prices) - Math.min(...product.prices);
-  return `<header class="heading-row"><div><h1 id="main-content" tabindex="-1">${title}</h1><p>Дилшод, ${product.short.toLocaleLowerCase('ru')} ${delta <= 0 ? 'подешевел' : 'подорожал'} на ${money(Math.abs(delta))} сум за неделю.</p></div><div class="heading-right"><div class="meta">Суббота, 31 октября<br>Магазин в Чиланзаре</div></div></header>${filters()}<nav class="studio-product-tabs" aria-label="Товары">${visibleProducts().map(item => `<button class="studio-product-tab ${state.productId === item.id ? 'active' : ''}" data-action="product" data-id="${item.id}" aria-pressed="${state.productId === item.id}"><span>${item.short}</span><strong class="num">${money(offersFor(item, state.market)[0].price)}</strong><small>/${item.unit}</small></button>`).join('')}</nav>${!visibleProducts().length ? emptyProducts() : ''}<div class="studio-feature-grid"><div><section class="studio-research"><div class="quote-top"><div><h2>${product.name}</h2><p class="meta">${product.origin} · ${product.pack}</p></div>${favoriteButton(product)}</div>${priceAndChange()}<div class="studio-chart-well">${rangeControls()}<div class="chart" data-chart></div></div><p class="studio-source">${icon('check-circle')}Сравнение одинаковых единиц · 3 поставщика</p></section><section class="studio-context"><div><h2>Один товар. Разные цены.</h2><p>Разница между самым дорогим и дешёвым предложением.</p></div><span class="num">${money(difference)}<small class="muted" style="display:block;text-align:right">сум / ${product.unit}</small></span></section>${cartPreview()}</div><section class="studio-purchase"><h2>Выберите предложение</h2><p class="meta">${product.name} · цена за ${product.unit}</p><div class="offer-heading"><span>Поставщик</span><span class="muted">Сум / ${product.unit}</span></div>${offerOptions()}${orderControls()}</section></div>`;
+  return `<header class="heading-row"><div><h1 id="main-content" tabindex="-1">${title}</h1><p>Дилшод, ${product.short.toLocaleLowerCase('ru')} ${delta <= 0 ? 'подешевел' : 'подорожал'} на ${money(Math.abs(delta))} сум за неделю.</p></div><div class="heading-right"><div class="meta">Суббота, 31 октября<br>Магазин в Чиланзаре</div></div></header>${filters()}<nav class="studio-product-tabs" aria-label="Товары">${visibleProducts().map(item => `<button class="studio-product-tab ${state.productId === item.id ? 'active' : ''}" data-action="product" data-id="${item.id}" aria-pressed="${state.productId === item.id}"><span>${item.short}</span>${state.productId===item.id?icon('check-circle','studio-product-check'):''}<div><strong class="num">${money(offersFor(item, state.market)[0].price)}</strong><small>/${item.unit==='кг'?(language==='ru'?'кг':'kg'):(language==='ru'?'л':'l')}</small></div></button>`).join('')}</nav>${!visibleProducts().length ? emptyProducts() : ''}<div class="studio-feature-grid"><div><section class="studio-research"><div class="quote-top"><div><h2>${product.name}</h2><p class="meta">${product.origin} · ${product.pack}</p></div>${favoriteButton(product)}</div>${priceAndChange()}<div class="studio-chart-well">${rangeControls()}<div class="chart" data-chart></div></div><p class="studio-source">${icon('check-circle')}Сравнение одинаковых единиц · 3 поставщика</p></section><section class="studio-context"><div><h2>Один товар. Разные цены.</h2><p>Разница между самым дорогим и дешёвым предложением.</p></div><span class="num">${money(difference)}<small class="muted" style="display:block;text-align:right">сум / ${product.unit}</small></span></section>${cartPreview()}</div><section class="studio-purchase"><h2>Выберите предложение</h2><p class="meta">${product.name} · цена за ${product.unit}</p><div class="offer-heading"><span>Поставщик</span><span class="muted">Сум / ${product.unit}</span></div>${offerOptions()}${orderControls()}</section></div>`;
 }
 
 function cartView() {
@@ -135,6 +135,7 @@ function alertsView() {
 }
 
 function pageBody(style) {
+  if (state.page === 'chat') return '<div data-chat-page></div>';
   if (state.page === 'profile') return profileView();
   if (state.page === 'cart') return cartView();
   if (state.page === 'alerts') return alertsView();
@@ -201,7 +202,7 @@ document.addEventListener('click', event => {
   if (!target || target.disabled) return;
   const action = target.dataset.action;
   state.feedback = '';
-  if (action === 'view') { if(target.dataset.view==='chat'){document.dispatchEvent(new CustomEvent('tarozi:assistant-open'));return;}state.page = target.dataset.view; state.confirmed = false; syncSelected(); }
+  if (action === 'view') { state.page = target.dataset.view; state.confirmed = false; syncSelected(); }
   else if (action === 'product') { state.productId = target.dataset.id; state.quantity = activeProduct().quantity; state.supplierId = availableOffers()[0].id; }
   else if (action === 'category') { state.category = target.dataset.category; syncSelected(); }
   else if (action === 'market') { state.market = target.dataset.market; state.supplierId = availableOffers()[0].id; state.page = 'market'; }
@@ -261,9 +262,9 @@ function finishRender() {
   let assistantHost=document.getElementById('assistant-root');
   if(!assistantHost){assistantHost=document.createElement('div');assistantHost.id='assistant-root';document.body.appendChild(assistantHost);}
   assistantHost.className='app studio'+(dark?' dark':'');
-  Charts.assistant(assistantHost,{language,names:Object.fromEntries(products.map(product=>[product.id,language==='ru'?product.name:(TRANSLATIONS[product.name]?.[language==='uz'?1:0]||product.name)]))});
+  Charts.assistant(assistantHost,{language,target:document.querySelector('[data-chat-page]'),names:Object.fromEntries(products.map(product=>[product.id,language==='ru'?product.name:(TRANSLATIONS[product.name]?.[language==='uz'?1:0]||product.name)]))});
   const nav=document.querySelector('.studio-nav');
-  if(nav){nav.innerHTML='';nav.setAttribute('data-nav-header','');Charts.nav(nav,navigation.map(item=>({id:item.id,label:language==='ru'?item.label:(TRANSLATIONS[item.label]?.[language==='uz'?1:0]||item.label),...(item.id==='cart'?{count:state.cart.length}:{})})),state.page,language==='ru'?'Главная навигация':language==='uz'?'Asosiy navigatsiya':'Main navigation');}
+  if(nav){nav.innerHTML='';nav.setAttribute('data-nav-header','');Charts.nav(nav,navigation.map(item=>({id:item.id,label:language==='ru'?item.label:(TRANSLATIONS[item.label]?.[language==='uz'?1:0]||item.label)})),state.page,language==='ru'?'Главная навигация':language==='uz'?'Asosiy navigatsiya':'Main navigation');}
 }
 function profileView() {
   if (!authReady) return '<div class="auth-loading" role="status" aria-label="Загрузка"><span></span></div>';
@@ -294,7 +295,7 @@ async function accountRequest(endpoint, data) {
  const result=await response.json(); if(!response.ok)throw new Error(result.error); return result;
 }
 function authView() {
- return `<section class="auth-page"><div class="auth-intro"><h1 id="main-content">${authMode==='register'?'Создать аккаунт':'Вход в Tarozi'}</h1><p class="muted">Ваш магазин. Ваши закупки.</p></div><form id="account-form" class="profile-form auth-form">${authMode==='register'?'<label>Имя<input name="name" required maxlength="80" autocomplete="name"></label>':''}<label>Email<input name="email" type="email" required autocomplete="email"></label><label>Пароль<input name="password" type="password" required minlength="8" maxlength="128" autocomplete="${authMode==='register'?'new-password':'current-password'}"></label>${authMode==='register'?'<p class="meta">Не менее 8 символов, латинская буква и цифра.</p>':''}${authError?`<p class="negative" role="alert">${esc(authError)}</p>`:''}<button class="button primary full" ${authBusy?'disabled':''}>${authMode==='register'?'Создать аккаунт':'Войти'}</button><button class="button full" type="button" data-auth="google" ${!googleEnabled||authBusy?'disabled':''}>G · Продолжить с Google</button><button class="text-button" type="button" data-auth="switch">${authMode==='register'?'Уже есть аккаунт? Войти':'Нет аккаунта? Зарегистрироваться'}</button></form></section>`;
+ return `<section class="auth-page"><div class="auth-intro"><h1 id="main-content">${authMode==='register'?'Создать аккаунт':'Вход в Tarozi'}</h1><p class="muted">Ваш магазин. Ваши закупки.</p></div><form id="account-form" class="profile-form auth-form">${authMode==='register'?'<label>Имя<input name="name" required maxlength="80" autocomplete="name"></label>':''}<label>Email<input name="email" type="email" required autocomplete="email"></label><label>Пароль<input name="password" type="password" required minlength="8" maxlength="128" autocomplete="${authMode==='register'?'new-password':'current-password'}"></label>${authMode==='register'?'<p class="meta">Не менее 8 символов, латинская буква и цифра.</p>':''}${authError?`<p class="negative" role="alert">${esc(authError)}</p>`:''}<button class="button primary full" ${authBusy?'disabled':''}>${authMode==='register'?'Создать аккаунт':'Войти'}</button><button class="button full" type="button" data-auth="google" ${!googleEnabled||authBusy?'disabled':''}>${icon('google-logo')}Продолжить с Google</button><button class="text-button" type="button" data-auth="switch">${authMode==='register'?'Уже есть аккаунт? Войти':'Нет аккаунта? Зарегистрироваться'}</button></form></section>`;
 }
 document.addEventListener('submit',async event=>{
  if(event.target.id!=='account-form')return;event.preventDefault();
