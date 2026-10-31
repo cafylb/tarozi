@@ -4,12 +4,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { createAuth } from './auth.mjs';
+import { createAssistant } from './assistant.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 4173);
 const handleAuth = await createAuth(root, port);
+const handleAssistant = createAssistant(root, port);
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   if (await handleAuth(req, res, url)) return;
+  if (await handleAssistant(req, res, url)) return;
   if (url.pathname !== '/' && url.pathname !== '/index.html' && url.pathname !== '/favicon.svg') {
     res.writeHead(404); res.end('Not found'); return;
   }

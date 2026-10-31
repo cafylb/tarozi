@@ -257,6 +257,10 @@ function finishRender() {
   const account = document.querySelector('.studio-top .account');
   if (account) account.outerHTML = `<div class="account-controls"><label><span class="sr-only">Язык</span><select id="language-select" aria-label="Language"><option value="ru" ${language==='ru'?'selected':''}>RU</option><option value="en" ${language==='en'?'selected':''}>EN</option><option value="uz" ${language==='uz'?'selected':''}>UZ</option></select></label><button class="icon-btn" data-settings="theme" aria-label="Сменить тему" title="Сменить тему">${icon('sun')}</button><button class="profile-trigger" data-settings="profile"><span class="avatar">${esc(profile?.name?.slice(0,1) || 'Д')}</span><span>${esc(profile?.name || 'Аккаунт')}</span></button></div>`;
   if (language !== 'ru') translatePage();
+  let assistantHost=document.getElementById('assistant-root');
+  if(!assistantHost){assistantHost=document.createElement('div');assistantHost.id='assistant-root';document.body.appendChild(assistantHost);}
+  assistantHost.className='app studio'+(dark?' dark':'');
+  Charts.assistant(assistantHost,{language,names:Object.fromEntries(products.map(product=>[product.id,language==='ru'?product.name:(TRANSLATIONS[product.name]?.[language==='uz'?1:0]||product.name)]))});
   const nav=document.querySelector('.studio-nav');
   if(nav){nav.innerHTML='';nav.setAttribute('data-nav-header','');Charts.nav(nav,navigation.map(item=>({id:item.id,label:language==='ru'?item.label:(TRANSLATIONS[item.label]?.[language==='uz'?1:0]||item.label),...(item.id==='cart'?{count:state.cart.length}:{})})),state.page,language==='ru'?'Главная навигация':language==='uz'?'Asosiy navigatsiya':'Main navigation');}
 }
@@ -307,3 +311,9 @@ document.addEventListener('click',async event=>{
  if(control.dataset.auth==='logout'){try{await accountRequest('/api/auth/logout',{});profile=null;refresh();}catch{authError='Не удалось выйти';refresh();}}
 });
 if(typeof fetch==='function')fetch('/api/auth/session',{credentials:'same-origin',cache:'no-store'}).then(response=>{if(!response.ok)throw new Error();return response.json();}).then(result=>{profile=result.user;googleEnabled=result.googleEnabled;}).catch(()=>{authError='Сервер аккаунтов недоступен';}).finally(()=>{authReady=true;const params=new URLSearchParams(location.search);if(params.has('auth')){state.page='profile';if(params.get('auth')==='failed')authError='Не удалось войти через Google. Попробуйте ещё раз.';history.replaceState(null,'','/');}refresh();});
+
+document.addEventListener('tarozi:offer',event=>{
+ const offer=event.detail;const product=byId(offer?.productId);if(!product||!supplierById(offer?.supplierId))return;
+ const canonical=offersFor(product).find(item=>item.id===offer.supplierId);if(!canonical)return;
+ state.page='market';state.market='all';state.category='all';state.query='';state.productId=product.id;state.supplierId=canonical.id;state.quantity=Math.max(product.min,Math.min(canonical.stock,Number(offer.quantity)||product.quantity));state.feedback='';refresh();
+});
