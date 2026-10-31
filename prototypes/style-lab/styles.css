@@ -445,7 +445,7 @@ kbd { border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; line-
 /* Navigation adapted from the supplied pill header. */
 .studio-top {height:96px;max-width:1320px;gap:24px;}
 .studio-nav {display:flex;min-width:0;flex:none;}
-.header-pill {position:relative;display:flex;align-items:center;width:max-content;gap:2px;padding:4px;margin:0;list-style:none;border:2px solid var(--ink);border-radius:999px;background:var(--ground);isolation:isolate;}
+.header-pill {position:relative;display:flex;align-items:center;width:max-content;gap:2px;padding:4px;margin:0;list-style:none;border:2px solid transparent;border-radius:999px;background:var(--ground);isolation:isolate;}
 .header-tab {position:relative;z-index:1;list-style:none;}
 .header-tab button {display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:0 17px;border:0;background:transparent;white-space:nowrap;font-size:13px;font-weight:500;color:var(--ink);border-radius:999px;}
 .header-tab button:focus-visible {outline-color:var(--accent);outline-offset:4px;}
@@ -590,7 +590,7 @@ kbd { border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; line-
 @media(max-width:760px){.product-ticker-track{width:calc(var(--ticker-count,6) * 310px);}.product-ticker-group .studio-product-tab{min-width:145px;}}
 @media(prefers-reduced-motion:reduce){.product-ticker-track{animation:none;transform:none;width:calc(100% * var(--ticker-pages,1));}.product-ticker-group{flex-basis:100%;width:100%;padding-right:0;}.product-ticker-group[aria-hidden]{display:none;}.studio-product-tabs.is-moving{overflow-x:auto;mask-image:none;}}
 @media(prefers-reduced-motion:reduce) and (max-width:760px){.product-ticker-track{width:calc(var(--ticker-count,6) * 155px - 10px);}}
-.assistant-demo{width:min(580px,100%);margin-top:22px;text-align:left;}.assistant-demo-label{display:block;color:var(--muted);font-size:11px;margin-bottom:12px;}.assistant-demo .assistant-message{margin-bottom:14px;}.assistant-demo .assistant-message.assistant{padding:0 4px;}.assistant-demo+.assistant-prompts{margin-top:10px;}
+.assistant-demo{width:min(580px,100%);margin-top:22px;text-align:left;}.assistant-demo .assistant-message{margin-bottom:14px;}.assistant-demo .assistant-message.assistant{padding:0 4px;}.assistant-demo+.assistant-prompts{margin-top:10px;}
 
 .motion-enter{opacity:0;transform:translateY(14px);transition:opacity 550ms var(--ease-out),transform 550ms var(--ease-out);}
 .motion-enter.motion-visible,.motion-enter:focus-within{opacity:1;transform:none;}
