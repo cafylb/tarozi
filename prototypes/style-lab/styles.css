@@ -1,6 +1,8 @@
 :root { --ease-out: cubic-bezier(.23,1,.32,1); color-scheme: light; }
 [hidden] {display:none!important;}
 * { box-sizing: border-box; }
+*,*::before,*::after {user-select:none;-webkit-user-select:none;}
+input,textarea,[contenteditable]:not([contenteditable="false"]),[contenteditable]:not([contenteditable="false"]) * {user-select:text;-webkit-user-select:text;}
 html { -webkit-tap-highlight-color: transparent; background: #f5f7f6; scrollbar-width:none; }
 html::-webkit-scrollbar {display:none;}
 body { margin: 0; font-family: "IBM Plex Sans", sans-serif; font-size: 14px; line-height: 1.45; }
