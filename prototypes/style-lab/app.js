@@ -26,12 +26,13 @@ const navigation = [
   { id: 'cart', label: 'Моя закупка', icon: 'shopping-bag' },
   { id: 'favorites', label: 'Избранное', icon: 'heart' },
   { id: 'alerts', label: 'Оповещения', icon: 'bell' },
+  { id: 'stores', label: 'Магазины', icon: 'storefront' },
   { id: 'chat', label: 'Чат', icon: 'robot' }
 ];
 const activeProduct = () => byId(state.productId);
 const availableOffers = () => offersFor(activeProduct(), state.market);
 const activeOffer = () => availableOffers().find(offer => offer.id === state.supplierId) || availableOffers()[0];
-const visibleProducts = () => filteredProducts({ ...state, favoriteOnly: state.page === 'favorites' });
+const visibleProducts = () => {const query=state.query.trim().toLocaleLowerCase();const matched=products.filter(product=>[product.name,product.origin,...(TRANSLATIONS[product.name]||[]),...(TRANSLATIONS[product.short]||[]),...marketCatalog.items.filter(item=>item.productId===product.id).map(item=>item.name)].join(' ').toLocaleLowerCase().includes(query));return filteredProducts({...state,query:'',favoriteOnly:state.page==='favorites'}).filter(product=>matched.includes(product));};
 const formatDelta = value => `${value > 0 ? '+' : value < 0 ? '−' : ''}${money(Math.abs(value))}`;
 const deltaClass = value => value < 0 ? 'positive' : value > 0 ? 'negative' : 'muted';
 const pageName = () => navigation.find(item => item.id === state.page)?.label || 'Цены рынка';
@@ -41,7 +42,7 @@ function save() {
 }
 
 function navigationButtons(mode = 'sidebar') {
-  return navigation.map(item => {
+  return activeNavigation().map(item => {
     const active = state.page === item.id;
     if (mode === 'rail') return `<button class="rail-button ${active ? 'active' : ''}" data-action="view" data-view="${item.id}" aria-label="${item.label}" title="${item.label}" ${active ? 'aria-current="page"' : ''}>${icon(item.icon)}</button>`;
     if (mode === 'compact') return `<button data-action="view" data-view="${item.id}" class="${active ? 'active' : ''}" title="${item.label}" aria-label="${item.label}" ${active ? 'aria-current="page"' : ''}>${icon(item.icon)}</button>`;
@@ -134,17 +135,22 @@ function alertsView() {
   }).join('')}</div><p class="cart-note">Демонстрационные настройки. Уведомления не отправляются.</p>`;
 }
 
+function activeNavigation(){return profile?.role==='seller'?[...navigation.slice(0,-1),{id:'seller',label:'Кабинет',icon:'storefront'},navigation.at(-1)]:navigation;}
 function pageBody(style) {
+  if(!authReady)return '<div class="auth-loading" role="status" aria-label="Загрузка"><span></span></div>';
+  if(!profile)return authView();
+  if(state.page==='stores')return storesView();
+  if(state.page==='seller')return sellerView();
   if (state.page === 'chat') return '<div data-chat-page></div>';
   if (state.page === 'profile') return profileView();
   if (state.page === 'cart') return cartView();
   if (state.page === 'alerts') return alertsView();
   if (!visibleProducts().length) return `${heading(pageName(), 'Ташкент · демонстрационные предложения')}${tabs()}${filters()}${emptyProducts()}`;
-  return marketStudio();
+  return marketStudio()+marketInsights();
 }
 
 const variants = [
-  () => `<div class="app studio" data-ui><header class="studio-top">${wordmark()}<nav class="studio-nav" aria-label="Главная навигация">${navigationButtons('top')}</nav><div class="account"><div class="person-name">Магазин Дилшода<small>Ташкент</small></div><span class="avatar">Д</span></div></header><main class="studio-canvas">${pageBody('studio')}${state.page==='chat'?'':footer()}</main></div>`
+  () => `<div class="app studio" data-ui><header class="studio-top">${wordmark()}<nav class="studio-nav" aria-label="Главная навигация">${navigationButtons('top')}</nav><div class="account"><div class="person-name">Магазин Дилшода<small>Ташкент</small></div><span class="avatar">Д</span></div></header><main class="studio-canvas">${pageBody('studio')}${!profile||['chat','seller','stores'].includes(state.page)?'':footer()}</main></div>`
 ];
 
 function drawCharts() {
@@ -169,7 +175,7 @@ function drawCharts() {
 }
 
 function releaseCharts() {
-  stage.querySelectorAll('[data-chart],[data-nav-header]').forEach(element => Charts.release(element));
+  stage.querySelectorAll('[data-chart],[data-nav-header],[data-analytics-chart],[data-store-map],[data-store-picker]').forEach(element => Charts.release(element));
 }
 
 function syncSelected() {
@@ -190,6 +196,7 @@ function refresh() {
   stage.innerHTML = variants[current]();
   finishRender();
   drawCharts();
+  mountCommerce();
   if (id) {
     const replacement = document.getElementById(id);
     replacement?.focus({ preventScroll: true });
@@ -202,7 +209,7 @@ document.addEventListener('click', event => {
   if (!target || target.disabled) return;
   const action = target.dataset.action;
   state.feedback = '';
-  if (action === 'view') { state.page = target.dataset.view; state.confirmed = false; syncSelected(); }
+  if (action === 'view') { state.page = target.dataset.view; state.confirmed = false; syncSelected(); if(state.page==='seller')queueMicrotask(loadSeller); }
   else if (action === 'product') { state.productId = target.dataset.id; state.quantity = activeProduct().quantity; state.supplierId = availableOffers()[0].id; }
   else if (action === 'category') { state.category = target.dataset.category; syncSelected(); }
   else if (action === 'market') { state.market = target.dataset.market; state.supplierId = availableOffers()[0].id; state.page = 'market'; }
@@ -264,12 +271,12 @@ function finishRender() {
   assistantHost.className='app studio'+(dark?' dark':'');
   Charts.assistant(assistantHost,{language,target:document.querySelector('[data-chat-page]'),names:Object.fromEntries(products.map(product=>[product.id,language==='ru'?product.name:(TRANSLATIONS[product.name]?.[language==='uz'?1:0]||product.name)]))});
   const nav=document.querySelector('.studio-nav');
-  if(nav){nav.innerHTML='';nav.setAttribute('data-nav-header','');Charts.nav(nav,navigation.map(item=>({id:item.id,label:language==='ru'?item.label:(TRANSLATIONS[item.label]?.[language==='uz'?1:0]||item.label)})),state.page,language==='ru'?'Главная навигация':language==='uz'?'Asosiy navigatsiya':'Main navigation');}
+  if(nav){nav.hidden=!profile;nav.innerHTML='';nav.setAttribute('data-nav-header','');Charts.nav(nav,activeNavigation().map(item=>({id:item.id,label:language==='ru'?item.label:(TRANSLATIONS[item.label]?.[language==='uz'?1:0]||item.label)})),state.page,language==='ru'?'Главная навигация':language==='uz'?'Asosiy navigatsiya':'Main navigation');}
 }
 function profileView() {
   if (!authReady) return '<div class="auth-loading" role="status" aria-label="Загрузка"><span></span></div>';
   if (!profile) return authView();
-  return `<section class="profile-page"><header class="heading-row"><div><h1 id="main-content">Профиль</h1><p>Ваш аккаунт и магазин</p></div></header><div class="profile-layout"><div class="profile-summary"><span class="avatar profile-avatar">${esc(profile?.name?.slice(0,1)||'Д')}</span><h2>${esc(profile?.name||'Дилшод Каримов')}</h2><p class="muted">${esc(profile?.email||'Локальный демо-профиль')}</p><p class="meta">Покупатель · Ташкент</p></div><form id="profile-form" class="profile-form">${authError?`<p class="negative" role="alert">${esc(authError)}</p>`:''}<label>Имя<input name="name" required maxlength="80" value="${esc(profile?.name||'Дилшод Каримов')}"></label><label>Email<input name="email" type="email" readonly required value="${esc(profile?.email||'')}"></label><label>Название магазина<input name="store" required maxlength="100" value="${esc(profile?.store||'Магазин Дилшода')}"></label><button class="button primary" type="submit">Сохранить профиль</button><p class="meta">Профиль сохранён в аккаунте Tarozi.</p><div class="oauth-section"><p class="meta">${profile.provider === 'google' ? 'Вход через Google' : 'Вход по email'}</p><button class="button" type="button" data-auth="logout">Выйти из аккаунта</button></div></form></div></section>`;
+  return `<section class="profile-page"><header class="heading-row"><div><h1 id="main-content">Профиль</h1><p>Ваш аккаунт и магазин</p></div></header><div class="profile-layout"><div class="profile-summary"><span class="avatar profile-avatar">${esc(profile?.name?.slice(0,1)||'Д')}</span><h2>${esc(profile?.name||'Дилшод Каримов')}</h2><p class="muted">${esc(profile?.email||'Локальный демо-профиль')}</p><p class="meta">${profile.role==='seller'?'Продавец':'Покупатель'} · Ташкент</p></div><form id="profile-form" class="profile-form">${authError?`<p class="negative" role="alert">${esc(authError)}</p>`:''}<label>Имя<input name="name" required maxlength="80" value="${esc(profile?.name||'Дилшод Каримов')}"></label><label>Email<input name="email" type="email" readonly value="${esc(profile?.email||'')}"></label><label>Название магазина<input name="store" required maxlength="100" value="${esc(profile?.store||'Магазин Дилшода')}"></label><button class="button primary" type="submit">Сохранить профиль</button><div class="oauth-section"><p class="meta">${profile.provider==='demo'?tr('Демо-вход','Demo session','Demo kirish'):profile.provider==='google'?'Вход через Google':'Вход по email'}</p><button class="button" type="button" data-auth="logout">Выйти из аккаунта</button></div></form></div></section>`;
 }
 document.addEventListener('click', event => {
   const settings=event.target.closest('[data-settings]');
@@ -284,6 +291,7 @@ document.addEventListener('submit', event => {
   if(event.target.id!=='profile-form') return;
   event.preventDefault();
   const values=new FormData(event.target);
+  if(demoSession){profile.name=String(values.get('name'));profile.store=String(values.get('store'));if(profile.role==='seller')localStorage.setItem('tarozi-demo-store',JSON.stringify({...readDemoStore(),store:profile.store}));refresh();return;}
   accountRequest('/api/auth/profile',{name:values.get('name'),store:values.get('store')}).then(result=>{profile=result.user;refresh();document.getElementById('announcer').textContent='Профиль сохранён';}).catch(()=>{authError='Не удалось сохранить профиль';refresh();});
 });
 window.addEventListener('resize', drawCharts);
@@ -295,24 +303,24 @@ async function accountRequest(endpoint, data) {
  const result=await response.json(); if(!response.ok)throw new Error(result.error); return result;
 }
 function authView() {
- return `<section class="auth-page"><div class="auth-intro"><h1 id="main-content">${authMode==='register'?'Создать аккаунт':'Вход в Tarozi'}</h1><p class="muted">Ваш магазин. Ваши закупки.</p></div><form id="account-form" class="profile-form auth-form">${authMode==='register'?'<label>Имя<input name="name" required maxlength="80" autocomplete="name"></label>':''}<label>Email<input name="email" type="email" required autocomplete="email"></label><label>Пароль<input name="password" type="password" required minlength="8" maxlength="128" autocomplete="${authMode==='register'?'new-password':'current-password'}"></label>${authMode==='register'?'<p class="meta">Не менее 8 символов, латинская буква и цифра.</p>':''}${authError?`<p class="negative" role="alert">${esc(authError)}</p>`:''}<button class="button primary full" ${authBusy?'disabled':''}>${authMode==='register'?'Создать аккаунт':'Войти'}</button><button class="button full" type="button" data-auth="google" ${!googleEnabled||authBusy?'disabled':''}>${icon('google-logo')}Продолжить с Google</button><button class="text-button" type="button" data-auth="switch">${authMode==='register'?'Уже есть аккаунт? Войти':'Нет аккаунта? Зарегистрироваться'}</button></form></section>`;
+ return `<section class="auth-page"><div class="auth-intro"><h1 id="main-content">${authMode==='register'?'Создать аккаунт':'Вход в Tarozi'}</h1><div class="auth-roles"><button type="button" data-commerce="role" data-role="buyer" aria-pressed="${authRole==='buyer'}" class="${authRole==='buyer'?'active':''}">${icon('user')}Покупатель</button><button type="button" data-commerce="role" data-role="seller" aria-pressed="${authRole==='seller'}" class="${authRole==='seller'?'active':''}">${icon('storefront')}Продавец</button></div></div><form id="account-form" class="profile-form auth-form">${authMode==='register'?'<label>Имя<input name="name" required maxlength="80" autocomplete="name"></label>':''}<label>Email<input name="email" type="email" required autocomplete="email"></label><label>Пароль<input name="password" type="password" required minlength="8" maxlength="128" autocomplete="${authMode==='register'?'new-password':'current-password'}"></label>${authMode==='register'?'<p class="meta">Не менее 8 символов, латинская буква и цифра.</p>':''}${authError?`<p class="negative" role="alert">${esc(authError)}</p>`:''}<button class="button primary full" ${authBusy?'disabled':''}>${authMode==='register'?'Создать аккаунт':'Войти'}</button><button class="button full google-entry" type="button" data-commerce="demo" ${authBusy?'disabled':''}><img src="${GOOGLE_LOGO}" width="20" height="20" alt="" aria-hidden="true">Продолжить с Google</button><button class="text-button" type="button" data-auth="switch">${authMode==='register'?'Уже есть аккаунт? Войти':'Нет аккаунта? Зарегистрироваться'}</button></form></section>`;
 }
 document.addEventListener('submit',async event=>{
  if(event.target.id!=='account-form')return;event.preventDefault();
  if(authBusy)return;
- const values=new FormData(event.target), data=Object.fromEntries(values);
+ const values=new FormData(event.target), data={...Object.fromEntries(values),role:authRole};
  authBusy=true;authError='';refresh();
- try{const result=await accountRequest('/api/auth/'+(authMode==='register'?'register':'login'),data);profile=result.user;}
+ try{const result=await accountRequest('/api/auth/'+(authMode==='register'?'register':'login'),data);profile=result.user;demoSession=false;state.page=profile.role==='seller'?'seller':'market';loadCatalog();if(profile.role==='seller')loadSeller();}
  catch(error){authError=error.message==='EMAIL_EXISTS'?'Этот email уже зарегистрирован':error.message==='WEAK_PASSWORD'?'Не менее 8 символов, латинская буква и цифра.':error.message==='INVALID_CREDENTIALS'?'Неверный email или пароль':'Не удалось войти. Попробуйте ещё раз.';}
  finally{authBusy=false;refresh();}
 });
 document.addEventListener('click',async event=>{
  const control=event.target.closest('[data-auth]');if(!control)return;
  if(control.dataset.auth==='switch'){authMode=authMode==='login'?'register':'login';authError='';refresh();}
- if(control.dataset.auth==='google')location.assign('/api/auth/google');
- if(control.dataset.auth==='logout'){try{await accountRequest('/api/auth/logout',{});profile=null;refresh();}catch{authError='Не удалось выйти';refresh();}}
+ if(control.dataset.auth==='google')location.assign('/api/auth/google?role='+authRole);
+ if(control.dataset.auth==='logout'){try{if(!demoSession)await accountRequest('/api/auth/logout',{});profile=null;demoSession=false;sellerItems=[];sellerStats=null;state.page='market';refresh();}catch{authError='Не удалось выйти';refresh();}}
 });
-if(typeof fetch==='function')fetch('/api/auth/session',{credentials:'same-origin',cache:'no-store'}).then(response=>{if(!response.ok)throw new Error();return response.json();}).then(result=>{profile=result.user;googleEnabled=result.googleEnabled;}).catch(()=>{authError='Сервер аккаунтов недоступен';}).finally(()=>{authReady=true;const params=new URLSearchParams(location.search);if(params.has('auth')){state.page='profile';if(params.get('auth')==='failed')authError='Не удалось войти через Google. Попробуйте ещё раз.';history.replaceState(null,'','/');}refresh();});
+if(typeof fetch==='function')fetch('/api/auth/session',{credentials:'same-origin',cache:'no-store'}).then(response=>{if(!response.ok)throw new Error();return response.json();}).then(result=>{profile=result.user;googleEnabled=result.googleEnabled;if(profile){state.page=profile.role==='seller'?'seller':'market';loadCatalog();if(profile.role==='seller')queueMicrotask(loadSeller);}}).catch(()=>{googleEnabled=false;}).finally(()=>{authReady=true;const params=new URLSearchParams(location.search);if(params.has('auth')){state.page=profile?.role==='seller'?'seller':profile?'market':'profile';if(params.get('auth')==='failed')authError='Не удалось войти через Google. Попробуйте ещё раз.';history.replaceState(null,'','/');}refresh();});
 
 document.addEventListener('tarozi:offer',event=>{
  const offer=event.detail;const product=byId(offer?.productId);if(!product||!supplierById(offer?.supplierId))return;

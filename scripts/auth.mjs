@@ -3,6 +3,7 @@ import path from 'node:path';
 import { parseEnv, promisify } from 'node:util';
 import { randomBytes, scrypt, timingSafeEqual, createHash } from 'node:crypto';
 import { OAuth2Client } from 'google-auth-library';
+import {createCommerce} from './commerce.mjs';
 const derive = promisify(scrypt);
 export async function createAuth(root, port) {
   let config = {};
@@ -18,14 +19,16 @@ export async function createAuth(root, port) {
   const persist = async () => { await fs.mkdir(path.dirname(filename), { recursive: true }); await fs.writeFile(filename + '.tmp', JSON.stringify(users)); await fs.rename(filename + '.tmp', filename); };
   let queue = Promise.resolve();
   const mutate = fn => { const next = queue.then(fn); queue = next.catch(() => {}); return next; };
-  const safe = user => user ? { id:user.id, name:user.name, email:user.email, store:user.store || '', provider:user.provider } : null;
+  const safe = user => user ? { id:user.id, name:user.name, email:user.email, store:user.store || '', address:user.address||'',lat:user.lat,lng:user.lng,role:user.role||'buyer', provider:user.provider } : null;
   const cookie = (name, value, maxAge) => `${name}=${value}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${origin.startsWith('https:')?'; Secure':''}`;
   const cookies = req => Object.fromEntries((req.headers.cookie || '').split(';').map(part=>part.trim().split('=')));
   function session(req) { const token=cookies(req).tarozi_session; const value=sessions.get(token); if(!value || value.expires<Date.now()) { sessions.delete(token); return null; } return users.find(user=>user.id===value.id); }
   function establish(res, user) { const token=randomBytes(32).toString('hex'); sessions.set(token,{id:user.id,expires:Date.now()+7*86400000}); res.setHeader('Set-Cookie',cookie('tarozi_session',token,7*86400)); }
   const json=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
   async function body(req) { let text=''; for await(const chunk of req) { text+=chunk; if(text.length>16384) throw new Error('BODY_TOO_LARGE'); } return JSON.parse(text || '{}'); }
+  const commerce=await createCommerce(root,{session,users,mutate,persist,json,origin});
   return async function handleAuth(req,res,url) {
+    if(await commerce(req,res,url))return true;
     if(!url.pathname.startsWith('/api/auth/'))return false;
     res.setHeader('Cache-Control','no-store');
     try {
@@ -33,7 +36,7 @@ export async function createAuth(root, port) {
       if(req.method==='GET' && url.pathname==='/api/auth/google') {
         if(!google){json(res,503,{error:'GOOGLE_NOT_CONFIGURED'});return true;}
         const state=randomBytes(32).toString('hex'), verifier=randomBytes(32).toString('base64url');
-        pending.set(state,{verifier,expires:Date.now()+600000});
+        pending.set(state,{verifier,role:url.searchParams.get('role')==='seller'?'seller':'buyer',expires:Date.now()+600000});
         for(const [key,value] of pending)if(value.expires<Date.now())pending.delete(key);
         res.setHeader('Set-Cookie',cookie('tarozi_oauth',state,600));
         const target=google.generateAuthUrl({scope:['openid','email','profile'],state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256',prompt:'select_account'});
@@ -48,7 +51,7 @@ export async function createAuth(root, port) {
         const ticket=await google.verifyIdToken({idToken:tokens.id_token,audience:config.GOOGLE_CLIENT_ID});
         const identity=ticket.getPayload();
         if(!identity?.sub || !identity.email_verified)throw new Error('IDENTITY_INVALID');
-        const user=await mutate(async()=>{let user=users.find(u=>u.provider==='google' && u.subject===identity.sub);if(!user){user={id:randomBytes(16).toString('hex'),provider:'google',subject:identity.sub,name:identity.name||identity.email,email:identity.email,store:''};users.push(user);await persist();}return user;});
+        const user=await mutate(async()=>{let user=users.find(u=>u.provider==='google' && u.subject===identity.sub);if(!user){user={id:randomBytes(16).toString('hex'),provider:'google',subject:identity.sub,name:identity.name||identity.email,email:identity.email,store:'',role:flow.role};users.push(user);await persist();}else if(flow.role==='seller'&&user.role!=='seller'){user.role='seller';await persist();}return user;});
         establish(res,user);res.writeHead(302,{Location:'/?auth=success'});res.end();return true;
       }
       if(req.method!=='POST'){json(res,405,{error:'METHOD_NOT_ALLOWED'});return true;}
@@ -68,13 +71,14 @@ export async function createAuth(root, port) {
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||password.length>128){json(res,400,{error:'INVALID_INPUT'});return true;}
       if(url.pathname==='/api/auth/register') {
         if(password.length<8||!/[a-zA-Z]/.test(password)||!/[0-9]/.test(password)){json(res,400,{error:'WEAK_PASSWORD'});return true;}
-        const user=await mutate(async()=>{if(users.some(u=>u.email===email&&u.provider==='email'))return null;const salt=randomBytes(16).toString('hex'),hash=(await derive(password,salt,64)).toString('hex');const user={id:randomBytes(16).toString('hex'),provider:'email',email,name:String(data.name||email.split('@')[0]).slice(0,80),salt,hash,store:''};users.push(user);await persist();return user;});
+        const user=await mutate(async()=>{if(users.some(u=>u.email===email&&u.provider==='email'))return null;const salt=randomBytes(16).toString('hex'),hash=(await derive(password,salt,64)).toString('hex');const user={id:randomBytes(16).toString('hex'),provider:'email',email,name:String(data.name||email.split('@')[0]).slice(0,80),salt,hash,store:'',role:data.role==='seller'?'seller':'buyer'};users.push(user);await persist();return user;});
         if(!user){json(res,409,{error:'EMAIL_EXISTS'});return true;}establish(res,user);json(res,200,{user:safe(user)});return true;
       }
       if(url.pathname==='/api/auth/login') {
         const user=users.find(u=>u.provider==='email'&&u.email===email);
         const actual=await derive(password,user?.salt||'dummy-salt',64);
         if(!user||!timingSafeEqual(actual,Buffer.from(user.hash,'hex'))){json(res,401,{error:'INVALID_CREDENTIALS'});return true;}
+        if(data.role==='seller'&&user.role!=='seller')await mutate(async()=>{user.role='seller';await persist();});
         establish(res,user);json(res,200,{user:safe(user)});return true;
       }
       json(res,404,{error:'NOT_FOUND'});

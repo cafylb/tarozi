@@ -38,3 +38,15 @@ The separate [backend](backend/README.md) adds a Fastify/TypeScript API, Supabas
 
 Run its offline checks with `cd backend && npm ci && npm run check`. A configured Supabase project or local Supabase stack is needed to run the persistent API; cloud hosting is not provisioned by the source code alone.
 Иконки интерфейса: Phosphor (SVG и `@phosphor-icons/react`), включая робота помощника. Полоса товаров использует отдельные переключатели с выбранным товаром; видимая полоса прокрутки страницы скрыта, прокрутка доступна.
+
+## Market research and seller demo
+
+Guests see a buyer/seller selector. By request, **Continue with Google now opens a demo session in the selected role immediately**, without contacting Google or verifying identity. Its color logo is bundled from Google's public branding assets. Email registration and server OAuth routes remain separate. Demo users never receive authenticated server-seller access.
+
+The Market page adds monthly averages, daily changes, store-price comparisons, multi-store histories and individual store charts. Sample prices, availability and history are illustrative (October 2026), not live quotes. History averages use sample stores offering the selected product. Registered sellers' prices appear separately, with actual price history starting at publication.
+
+Stores uses Leaflet/OpenStreetMap tiles (network required; attribution retained). Real sample locations: [Abay](https://uz.near-place.com/korzinkauz-13-abay-kochasi-toskent), [Alay](https://orgcatalog.com/en/orgs/korzinka-alay/), [TTZ](https://orgcatalog.com/en/orgs/korzinka-ttz/), [Bogishamol](https://narxbozor.uz/oz/orgs/korzinka-bogishamol/). These are examples, not registered partners. The Tarozi filter lists sellers; a marker appears after a seller saves their map location.
+
+Seller workspace supports adding/editing name, catalog product, price and stock. Zero stock removes public availability. Searches and explicit offer opens drive 30-day demand/view charts, starting at zero. Market benchmarks are labeled demo. Google-button demo sessions store inventory, store and measured events in this browser, including on GitHub Pages. Email-authenticated accounts use server-side roles and ownership checks with private `.local/accounts.json` and `.local/market-events.json`. This does not alter or integrate the separate Supabase backend.
+
+Checks: `node --test scripts/commerce.test.mjs scripts/assistant.test.mjs` covers roles, ownership, stock, price history, analytics counts, Origin, restart persistence and assistant regression. Map rendering and live OAuth have not been browser-tested.

@@ -4,9 +4,14 @@ import {flushSync} from 'react-dom';
 import Chart from './ui/chart';
 import NavHeader,{NavItem} from './ui/nav-header';
 import AssistantChat,{AssistantProps} from './ui/assistant-chat';
+import StoreMap,{StoreMapProps} from './ui/store-map';
 type Options={labels:string[];series:{name:string;values:number[]}[];yTicks:number[];type:'line'|'area'|'bar';locale:string;unit:string};
 const roots=new WeakMap<HTMLElement,Root>();
 const api={
+ map(element:HTMLElement,props:StoreMapProps) {
+  let root=roots.get(element);if(!root){root=createRoot(element);roots.set(element,root);}
+  flushSync(()=>root.render(<StoreMap {...props}/>));
+ },
  assistant(element:HTMLElement,props:AssistantProps) {
   let root=roots.get(element);if(!root){root=createRoot(element);roots.set(element,root);}
   flushSync(()=>root.render(<AssistantChat {...props}/>));
