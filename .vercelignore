@@ -1,0 +1,9 @@
+.env*
+.local
+.git
+.github
+.research
+.taste-skill
+backend
+node_modules
+*.log

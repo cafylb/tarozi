@@ -16,7 +16,7 @@ export function bestOffers(ids,quantity) {
 const knowledge='Tarozi is a wholesale-price comparison demo for shops in Tashkent. All prices, suppliers, stock and histories are illustrative, snapshot 2026-10-31; not live or web search. Twelve products. Compare equal units, supplier offers and 7-day/month histories. The service only searches products and compares prices; it does not arrange delivery. No real orders, payments, notifications or real-time forecasting. Email registration and Google OAuth exist; Google availability depends on configuration. Profiles, RU/EN/UZ and dark/light themes. No subscription price has been set. Never promise actual delivery, verification or savings outside supplied data.';
 const fallback={ru:'Сравниваю предложения демо-каталога. Для свободных ИИ-ответов ещё не подключён Gemini. Напишите товар и количество, например «сахар 50 кг».',en:'I compare demo-catalog offers. Gemini is not connected for free-form AI answers yet. Enter a product and quantity, e.g. “sugar 50 kg”.',uz:'Demo-katalog takliflarini taqqoslayman. Erkin AI javoblari uchun Gemini hali ulanmagan. Mahsulot va miqdorni yozing, masalan “shakar 50 kg”.'};
 const serviceAnswer={ru:'Tarozi помогает сравнивать оптовые предложения, историю цен и стоимость товаров. Выберите товар, поставщика и количество, затем добавьте в список закупки. В демо нет реальных платежей, отправки заказов и уведомлений. Все цены и поставщики вымышлены.',en:'Tarozi compares wholesale offers, price histories and product costs. Select a product, supplier and quantity, then add it to your purchase list. The demo makes no real payments, sends no orders or notifications. All prices and suppliers are illustrative.',uz:'Tarozi ulgurji takliflar, narxlar tarixi va xarid narxini taqqoslaydi. Mahsulot, yetkazib beruvchi va miqdorni tanlab, xarid ro‘yxatiga qo‘shing. Demo haqiqiy to‘lov, buyurtma yoki xabar yubormaydi. Narxlar va yetkazib beruvchilar namunaviy.'};
-export function createAssistant(root,port,{fetchImpl=fetch}={}) {
+export function createAssistant(root,port,{fetchImpl=fetch,allowedOrigin}={}) {
  const limits=new Map();let inflight=0,lastKey,lastFailure;
  return async(req,res,url)=>{
   if(url.pathname!=='/api/assistant')return false;
@@ -26,7 +26,7 @@ export function createAssistant(root,port,{fetchImpl=fetch}={}) {
   if(key!==lastKey){lastKey=key;lastFailure=undefined;}
   if(req.method==='GET'){json(200,{mode:key&&!lastFailure?'ai':'catalog',provider:'gemini',catalog:'demo'});return true;}
   if(req.method!=='POST'){json(405,{error:'METHOD_NOT_ALLOWED'});return true;}
-  if(req.headers.origin!==(process.env.APP_URL||env.APP_URL||`http://localhost:${port}`)){json(403,{error:'INVALID_ORIGIN'});return true;}
+  if(req.headers.origin!==(allowedOrigin||process.env.APP_URL||env.APP_URL||`http://localhost:${port}`)){json(403,{error:'INVALID_ORIGIN'});return true;}
   const now=Date.now();for(const [ip,value]of limits)if(value.until<now)limits.delete(ip);
   const ip=req.socket.remoteAddress;const limit=limits.get(ip)||{count:0,until:now+60000};limit.count++;limits.set(ip,limit);
   if(limit.count>12||inflight>=3){json(429,{error:'TRY_LATER'});return true;}
