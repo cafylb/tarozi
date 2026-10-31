@@ -131,3 +131,8 @@ function demoAnalytics(){
  const days=Array.from({length:30},(_,index)=>new Date(Date.now()-(29-index)*86400000).toISOString().slice(0,10));let events=[];try{events=JSON.parse(localStorage.getItem('tarozi-demo-events')||'[]').filter(event=>event.day>=days[0]);}catch{}
  return {days,searches:days.map(day=>events.filter(event=>event.day===day&&event.type==='search').length),views:days.map(day=>events.filter(event=>event.day===day&&event.type==='view').length),demand:products.map(product=>({productId:product.id,count:events.filter(event=>event.productId===product.id&&event.type==='search').length})),items:sellerItems.map(item=>({id:item.id,views:events.filter(event=>event.itemId===item.id&&event.type==='view').length}))};
 }
+
+function assistantDemo(){
+ const offer=productOffers(byId('rice')).find(offer=>offer.stock>=25),price=money(offer.price),total=money(offer.price*25);
+ return {question:tr('Где дешевле купить 25 кг риса?','Where can I find the cheapest 25 kg of rice?','25 kg guruchni qayerdan arzonroq topaman?'),answer:tr(`Самая низкая цена — в ${offer.store}: ${price} сум/кг. 25 кг стоят ${total} сум.`,`The lowest price is at ${offer.store}: ${price} UZS/kg. 25 kg costs ${total} UZS.`,`Eng arzon narx ${offer.store}da: ${price} so‘m/kg. 25 kg narxi ${total} so‘m.`)};
+}

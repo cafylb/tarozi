@@ -27,4 +27,5 @@ new vm.Script(script, { filename: 'index.html inline JavaScript' });
 assert(!/url\(https?:/.test(html));
 assert(html.includes('Демоданные'));
 assert(!html.includes('class="proto-picker-item"'));
+assert(!(await fs.readFile(path.join(root,'index.html'),'utf8')).includes('Delivery from'));
 console.log('Passed: sample prices, 7d/30d agreement, supplier stock, cart arithmetic, empty cart, search, category, favorites, bundled JavaScript syntax, offline assets, Studio without variant picker.');

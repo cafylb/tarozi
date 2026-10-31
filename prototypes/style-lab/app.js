@@ -101,10 +101,23 @@ function orderControls() {
   return `<div class="quantity-area"><label class="quantity-label" for="order-quantity"><span>Количество, ${product.unit}</span><span>от ${product.min} ${product.unit}</span></label><div class="quantity-row"><div class="stepper"><button data-action="quantity" data-direction="-1" aria-label="Уменьшить количество" ${state.quantity <= product.min ? 'disabled' : ''}>${icon('minus')}</button><input id="order-quantity" data-input="quantity" type="number" inputmode="numeric" min="${product.min}" max="${offer.stock}" step="1" value="${state.quantity}"><button data-action="quantity" data-direction="1" aria-label="Увеличить количество" ${state.quantity >= offer.stock ? 'disabled' : ''}>${icon('plus')}</button></div><strong class="num">${money(state.quantity * offer.price)} <small>сум</small></strong></div><button class="button primary full" data-action="add">${icon('plus')}В список закупки</button>${state.feedback ? `<p class="inline-feedback" role="status">${icon('check')} ${esc(state.feedback)}</p>` : ''}</div>`;
 }
 
+const productTickerStart=Date.now();
+let productTickerObserver;
+function productTabs(){
+ const visible=visibleProducts(),moving=visible.length===products.length;
+ const cards=clone=>visible.map(item=>`<button class="studio-product-tab ${state.productId===item.id?'active':''}" data-action="product" data-id="${item.id}" aria-pressed="${state.productId===item.id}" ${clone?'tabindex="-1"':''}><span>${item.short}</span>${state.productId===item.id?icon('check-circle','studio-product-check'):''}<div><strong class="num">${money(offersFor(item,state.market)[0].price)}</strong><small>/${item.unit==='кг'?(language==='ru'?'кг':'kg'):(language==='ru'?'л':'l')}</small></div></button>`).join('');
+ return moving?`<nav class="studio-product-tabs is-moving" aria-label="Товары"><div class="product-ticker-track" style="animation-delay:-${(Date.now()-productTickerStart)/1000}s"><div class="product-ticker-group">${cards(false)}</div><div class="product-ticker-group" aria-hidden="true">${cards(true)}</div></div></nav>`:`<nav class="studio-product-tabs" aria-label="Товары">${cards(false)}</nav>`;
+}
+function mountProductTicker(){
+ productTickerObserver?.disconnect();const ticker=document.querySelector('.studio-product-tabs.is-moving');
+ if(ticker&&typeof IntersectionObserver==='function'){productTickerObserver=new IntersectionObserver(entries=>{ticker.classList.toggle('is-offscreen',!entries[0].isIntersecting);});productTickerObserver.observe(ticker);}
+}
+document.addEventListener('visibilitychange',()=>document.documentElement.classList.toggle('page-hidden',document.hidden));
+
 function marketStudio() {
   const product = activeProduct();
   const title = state.query.trim()?productLabel(product):state.page === 'favorites' ? 'То, что всегда под рукой' : 'Закупка на сегодня';
-  return `<header class="heading-row"><div><h1 id="main-content" tabindex="-1">${title}</h1></div></header>${filters()}<nav class="studio-product-tabs" aria-label="Товары">${visibleProducts().map(item => `<button class="studio-product-tab ${state.productId === item.id ? 'active' : ''}" data-action="product" data-id="${item.id}" aria-pressed="${state.productId === item.id}"><span>${item.short}</span>${state.productId===item.id?icon('check-circle','studio-product-check'):''}<div><strong class="num">${money(offersFor(item, state.market)[0].price)}</strong><small>/${item.unit==='кг'?(language==='ru'?'кг':'kg'):(language==='ru'?'л':'l')}</small></div></button>`).join('')}</nav>${!visibleProducts().length ? emptyProducts() : ''}<div class="studio-feature-grid"><div><section class="studio-research"><div class="quote-top"><div><h2>${product.name}</h2><p class="meta">${product.origin} · ${product.pack}</p></div>${favoriteButton(product)}</div>${priceAndChange()}<div class="studio-chart-well">${rangeControls()}<div class="chart" data-chart></div></div></section></div><section class="studio-purchase"><h2>Выберите предложение</h2><p class="meta">${product.name} · цена за ${product.unit}</p><div class="offer-heading"><span>Поставщик</span><span class="muted">Сум / ${product.unit}</span></div>${offerOptions()}${orderControls()}</section></div>`;
+  return `<header class="heading-row"><div><h1 id="main-content" tabindex="-1">${title}</h1></div></header>${filters()}${productTabs()}${!visibleProducts().length ? emptyProducts() : ''}<div class="studio-feature-grid"><div><section class="studio-research"><div class="quote-top"><div><h2>${product.name}</h2><p class="meta">${product.origin} · ${product.pack}</p></div>${favoriteButton(product)}</div>${priceAndChange()}<div class="studio-chart-well">${rangeControls()}<div class="chart" data-chart></div></div></section></div><section class="studio-purchase"><h2>Выберите предложение</h2><p class="meta">${product.name} · цена за ${product.unit}</p><div class="offer-heading"><span>Поставщик</span><span class="muted">Сум / ${product.unit}</span></div>${offerOptions()}${orderControls()}</section></div>`;
 }
 
 function cartView() {
@@ -186,6 +199,7 @@ function refresh() {
   stage.innerHTML = variants[current]();
   finishRender();
   drawCharts();
+  mountProductTicker();
   mountCommerce();
   if (id) {
     const replacement = document.getElementById(id);
@@ -261,7 +275,7 @@ function finishRender() {
   let assistantHost=document.getElementById('assistant-root');
   if(!assistantHost){assistantHost=document.createElement('div');assistantHost.id='assistant-root';document.body.appendChild(assistantHost);}
   assistantHost.className='app studio'+(dark?' dark':'');
-  Charts.assistant(assistantHost,{language,target:document.querySelector('[data-chat-page]'),names:Object.fromEntries(products.map(product=>[product.id,language==='ru'?product.name:(TRANSLATIONS[product.name]?.[language==='uz'?1:0]||product.name)]))});
+  Charts.assistant(assistantHost,{language,demo:assistantDemo(),target:document.querySelector('[data-chat-page]'),names:Object.fromEntries(products.map(product=>[product.id,language==='ru'?product.name:(TRANSLATIONS[product.name]?.[language==='uz'?1:0]||product.name)]))});
   const nav=document.querySelector('.studio-nav');
   if(nav){nav.hidden=!profile;nav.innerHTML='';nav.setAttribute('data-nav-header','');Charts.nav(nav,activeNavigation().map(item=>({id:item.id,label:language==='ru'?item.label:(TRANSLATIONS[item.label]?.[language==='uz'?1:0]||item.label)})),state.page==='product-stats'?'alerts':state.page,language==='ru'?'Главная навигация':language==='uz'?'Asosiy navigatsiya':'Main navigation');}
 }
