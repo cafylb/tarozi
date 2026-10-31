@@ -105,8 +105,8 @@ const productTickerStart=Date.now();
 let productTickerObserver;
 function productTabs(){
  const visible=visibleProducts(),moving=visible.length===products.length;
- const cards=clone=>visible.map(item=>`<button class="studio-product-tab ${state.productId===item.id?'active':''}" data-action="product" data-id="${item.id}" aria-pressed="${state.productId===item.id}" ${clone?'tabindex="-1"':''}><span>${item.short}</span>${state.productId===item.id?icon('check-circle','studio-product-check'):''}<div><strong class="num">${money(offersFor(item,state.market)[0].price)}</strong><small>/${item.unit==='кг'?(language==='ru'?'кг':'kg'):(language==='ru'?'л':'l')}</small></div></button>`).join('');
- return moving?`<nav class="studio-product-tabs is-moving" aria-label="Товары"><div class="product-ticker-track" style="animation-delay:-${(Date.now()-productTickerStart)/1000}s"><div class="product-ticker-group">${cards(false)}</div><div class="product-ticker-group" aria-hidden="true">${cards(true)}</div></div></nav>`:`<nav class="studio-product-tabs" aria-label="Товары">${cards(false)}</nav>`;
+ const cards=clone=>visible.map(item=>`<button class="studio-product-tab ${state.productId===item.id?'active':''}" data-action="product" data-id="${item.id}" aria-pressed="${state.productId===item.id}" ${clone?'tabindex="-1"':''}><span>${item.short}</span>${state.productId===item.id?icon('check-circle','studio-product-check'):''}<div><strong class="num">${money(offersFor(item,state.market)[0].price)}</strong><small>/${unitLabel(item.unit)}</small></div></button>`).join('');
+ return moving?`<nav class="studio-product-tabs is-moving" aria-label="Товары"><div class="product-ticker-track" style="--ticker-count:${visible.length};--ticker-pages:${Math.max(1,visible.length/6)};animation-delay:-${(Date.now()-productTickerStart)/1000}s"><div class="product-ticker-group">${cards(false)}</div><div class="product-ticker-group" aria-hidden="true">${cards(true)}</div></div></nav>`:`<nav class="studio-product-tabs" aria-label="Товары">${cards(false)}</nav>`;
 }
 function mountProductTicker(){
  productTickerObserver?.disconnect();const ticker=document.querySelector('.studio-product-tabs.is-moving');
@@ -127,7 +127,7 @@ function cartView() {
     const supplier = supplierById(item.supplierId);
     const price = product.prices[suppliers.indexOf(supplier)];
     return `<article class="cart-item"><div><h2>${product.name}</h2><p>${supplier.name} · ${supplier.market}</p><p>${money(price)} сум / ${product.unit}</p></div><div class="cart-value"><strong class="num">${money(price * item.quantity)} сум</strong><div class="stepper"><button data-action="cart-quantity" data-index="${index}" data-direction="-1" aria-label="Уменьшить: ${product.name}" ${item.quantity <= product.min ? 'disabled' : ''}>${icon('minus')}</button><span class="num">${item.quantity} ${product.unit}</span><button data-action="cart-quantity" data-index="${index}" data-direction="1" aria-label="Увеличить: ${product.name}" ${item.quantity >= product.stock ? 'disabled' : ''}>${icon('plus')}</button></div></div><button class="icon-btn" data-action="remove" data-index="${index}" aria-label="Убрать из закупки: ${product.name}" title="Убрать товар">${icon('x')}</button></article>`;
-  }).join('')}<button class="text-button" data-action="view" data-view="market">${icon('arrow-left')}Вернуться к ценам</button></section><aside class="cart-summary"><h2>Итог закупки</h2><div class="sum-row"><span>Товары</span><span class="num">${money(summary.goods)} сум</span></div><div class="sum-total"><span>Итого</span><strong class="num">${money(summary.total)} <small>сум</small></strong></div><p class="meta">Товары ${summary.difference >= 0 ? 'дешевле' : 'дороже'} средней цены предложений на <span class="num">${money(Math.abs(summary.difference))} сум</span>.</p></aside></div>` : `<div class="empty"><h2>Список пока пуст</h2><p>Выберите товар и добавьте предложение поставщика.</p><button class="button" data-action="view" data-view="market">Открыть цены рынка</button></div>`}`;
+  }).join('')}<button class="text-button" data-action="view" data-view="market">${icon('arrow-left')}Вернуться к ценам</button></section><aside class="cart-summary"><h2>Итог закупки</h2><div class="sum-row"><span>Товары</span><span class="num">${money(summary.goods)} сум</span></div><div class="sum-total"><span>Итого</span><strong class="num">${money(summary.total)} <small>сум</small></strong></div></aside></div>` : `<div class="empty"><h2>Список пока пуст</h2><p>Выберите товар и добавьте предложение поставщика.</p><button class="button" data-action="view" data-view="market">Открыть цены рынка</button></div>`}`;
 }
 
 function alertsView() {
@@ -171,7 +171,7 @@ function drawCharts() {
   for (let tick = min; tick <= max; tick += step) yTicks.push(tick);
   document.querySelectorAll('[data-chart]').forEach(element => {
     if (element.dataset.drawn) return;
-    element.dataset.drawn = 'true';
+    element.dataset.drawn = 'true';element.dataset.motionChart='main:'+product.id+':'+state.range+':'+state.chartType;
     Charts.line(element, { type:state.chartType, locale:language, unit, labels, series: [{ name: `${seriesName}, ${unit} / ${product.unit}`, values }], height: () => element.clientHeight || 170, yTicks, format: value => `${money(value)} сум`, tickFormat: money, xAt: state.range === 7 ? [0, 2, 4, 6] : [0, 4, 8, 12], label: `Демонстрационная минимальная цена: ${product.name}` });
   });
   if (language !== 'ru') translatePage();
@@ -191,6 +191,17 @@ function syncSelected() {
   if (!availableOffers().some(offer => offer.id === state.supplierId)) state.supplierId = availableOffers()[0].id;
 }
 
+const motionSeen=new Set();let pageMotionObserver;
+function mountPageMotion(){
+ pageMotionObserver?.disconnect();if(!authReady)return;
+ const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+ if(reduce||typeof IntersectionObserver==='undefined')return;
+ const context=(profile?.id||'guest')+':'+state.page+(state.page==='product-stats'?':'+state.productId:'');
+ const nodes=stage.querySelectorAll('.studio-canvas>.heading-row,.studio-canvas>.filter-row,.studio-canvas>.studio-product-tabs,.studio-research,.studio-purchase,.insights-title,.metric-strip,.analytics-panel,.store-offer,.alert-card,.cart-item,.cart-summary,.auth-intro,.auth-form,.profile-summary,.seller-tabs,.seller-product-list,.seller-product-form,.stores-toolbar,.stores-list,.store-map-wrap');
+ pageMotionObserver=new IntersectionObserver(entries=>{let order=0;entries.forEach(entry=>{if(!entry.isIntersecting)return;const element=entry.target,key=element.dataset.motionKey;element.style.transitionDelay=Math.min(order++,3)*80+'ms';element.classList.add('motion-visible');motionSeen.add(key);pageMotionObserver.unobserve(element);});},{threshold:.08});
+ nodes.forEach((element,index)=>{const key=context+':'+index;if(motionSeen.has(key))return;element.dataset.motionKey=key;element.classList.add('motion-enter');pageMotionObserver.observe(element);});
+}
+
 function refresh() {
   const focus = document.activeElement;
   const id = focus?.id;
@@ -201,6 +212,7 @@ function refresh() {
   drawCharts();
   mountProductTicker();
   mountCommerce();
+  mountPageMotion();
   if (id) {
     const replacement = document.getElementById(id);
     replacement?.focus({ preventScroll: true });

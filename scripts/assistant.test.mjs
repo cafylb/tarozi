@@ -9,7 +9,7 @@ import {createAssistant,bestOffers,findProducts} from './assistant.mjs';
 test('offer search understands RU/EN/UZ and ranks product costs without delivery',()=>{
  for(const query of ['сахар 50 кг','sugar 50 kg','shakar 50 kg'])assert.deepEqual(findProducts(query),['sugar']);
  assert.deepEqual(findProducts('un 25 kg'),['flour']);
- assert.deepEqual(findProducts('unknown item'),[]);
+ assert.deepEqual(findProducts('unknown item'),[]);for(const [query,id] of [['sabzi','carrot'],['tomat','tomato-paste'],['sariyog','butter'],['choy','tea'],['tuxum','egg'],['makaron','pasta']])assert.deepEqual(findProducts(query),[id]);
  const offers=bestOffers(['sugar'],50);
  assert.equal(offers[0].supplierId,'baraka');assert.equal('delivery' in offers[0],false);assert.equal(offers[0].total,490000);
  assert.equal(bestOffers(['rice'],25)[0].total,362500);

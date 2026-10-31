@@ -13,12 +13,12 @@ for (const product of products) {
   assert(offersFor(product).every(offer => offer.stock >= product.quantity));
 }
 const sum = cartSummary(initialCart());
-assert.equal(sum.goods, 1066100);
+assert.equal(sum.goods, 1584200);
 assert.equal(sum.delivery, undefined);
-assert.equal(sum.total, 1066100);
+assert.equal(sum.total, 1584200);
 assert.equal(cartSummary([]).total, 0);
 assert.equal(filteredProducts({ query: '  САХАР  ' }).length, 1);
-assert.equal(filteredProducts({ category: 'vegetables' }).length, 2);
+assert.equal(filteredProducts({ category: 'vegetables' }).length, 3);
 assert.equal(filteredProducts({ query: 'несуществующий товар' }).length, 0);
 assert.equal(filteredProducts({ favorites: new Set(['rice']), favoriteOnly: true })[0].id, 'rice');
 const html = await fs.readFile(path.join(root, 'index.html'), 'utf8');
@@ -28,4 +28,5 @@ assert(!/url\(https?:/.test(html));
 assert(html.includes('Демоданные'));
 assert(!html.includes('class="proto-picker-item"'));
 assert(!(await fs.readFile(path.join(root,'index.html'),'utf8')).includes('Delivery from'));
+const pageText=await fs.readFile(path.join(root,'index.html'),'utf8');for(const removed of ['Demo checkout. No payments or supplier requests are made.','Delivery is charged once per supplier.','Sample stores are not Tarozi partners.'])assert(!pageText.includes(removed));
 console.log('Passed: sample prices, 7d/30d agreement, supplier stock, cart arithmetic, empty cart, search, category, favorites, bundled JavaScript syntax, offline assets, Studio without variant picker.');

@@ -1,14 +1,26 @@
-import React,{useId} from 'react';
+import React,{useId,useEffect,useRef,useState} from 'react';
 import {ResponsiveContainer,ComposedChart,BarChart,Line,Area,Bar,Cell,XAxis,YAxis,CartesianGrid,Tooltip,ReferenceLine} from 'recharts';
 export interface ChartSeries {key:string;label:string;color?:string}
 export interface ChartProps {
  data:Record<string,string|number|number[]>[];xKey:string;series:ChartSeries[];
  type?:'line'|'area'|'bar'|'horizontal-bar';ticks?:number[];locale?:string;unit?:string;
- band?:boolean;reference?:number;referenceLabel?:string;highlightIndex?:number;
+ band?:boolean;reference?:number;referenceLabel?:string;highlightIndex?:number;animationKey?:string;
 }
 const palette=['var(--ui-primary)','#00bdb4','var(--ui-fg)','var(--ui-fg-muted)'];
-export default function Chart({data,xKey,series,type='line',ticks,locale='ru',unit='сум',band=false,reference,referenceLabel,highlightIndex}:ChartProps){
+const drawnCharts=new Set<string>();
+export default function Chart({data,xKey,series,type='line',ticks,locale='ru',unit='сум',band=false,reference,referenceLabel,highlightIndex,animationKey}:ChartProps){
  const id='chart'+useId().replace(/[^a-zA-Z0-9]/g,'');
+ const key=animationKey||id,host=useRef<HTMLDivElement>(null);
+ const [draw,setDraw]=useState(()=>drawnCharts.has(key)||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'done':'pending');
+ useEffect(()=>{
+  if(!host.current||drawnCharts.has(key)){setDraw('done');return;}
+  const reduce=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');let timer:ReturnType<typeof setTimeout>|undefined;
+  const finish=()=>{drawnCharts.add(key);setDraw('done');};
+  if(reduce?.matches||typeof IntersectionObserver==='undefined'){finish();return;}
+  const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();drawnCharts.add(key);setDraw('drawing');timer=setTimeout(()=>setDraw('done'),1000);}},{threshold:.12});
+  observer.observe(host.current);const changed=()=>{if(reduce?.matches){observer.disconnect();finish();}};reduce?.addEventListener('change',changed);
+  return()=>{observer.disconnect();if(timer)clearTimeout(timer);reduce?.removeEventListener('change',changed);};
+ },[key]);
  const format=(value:number)=>new Intl.NumberFormat(locale,{maximumFractionDigits:2}).format(value);
  const short=(value:number)=>Math.abs(value)>=1000?`${format(value/1000)}k`:format(value);
  const horizontal=type==='horizontal-bar',bars=type==='bar'||horizontal,Container=bars?BarChart:ComposedChart;
@@ -17,7 +29,7 @@ export default function Chart({data,xKey,series,type='line',ticks,locale='ru',un
  const domain:[number,number]|undefined=bars?undefined:ticks?.length?[ticks[0],ticks[ticks.length-1]]:values.length?[Math.floor(low-padding),Math.ceil(high+padding)]:[0,1];
  const numericAxis={axisLine:false,tickLine:false,tick:{fontSize:11,fill:'var(--ui-fg-muted)'},allowDecimals:unit!=='',tickFormatter:short};
  const name=(label:unknown)=>String(label).length>20?String(label).slice(0,19)+'…':String(label);
- return <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{width:500,height:240}}>
+ return <div ref={host} className="chart-viewport" data-draw={draw}><ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{width:500,height:240}}>
   <Container data={data} layout={horizontal?'vertical':'horizontal'} margin={{top:14,right:horizontal?28:12,bottom:3,left:0}} accessibilityLayer>
    <defs><linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--ui-primary)" stopOpacity={.2}/><stop offset="100%" stopColor="var(--ui-primary)" stopOpacity={.015}/></linearGradient></defs>
    <CartesianGrid stroke="var(--ui-border)" strokeDasharray="3 5" vertical={horizontal} horizontal={!horizontal}/>
@@ -39,5 +51,5 @@ export default function Chart({data,xKey,series,type='line',ticks,locale='ru',un
     return <Line key={item.key} {...common} type="linear" stroke={color} strokeWidth={index===0?2.5:1.7} dot={false} activeDot={{r:4,stroke:'var(--ui-bg)',strokeWidth:2}}/>;
    })}
   </Container>
- </ResponsiveContainer>;
+ </ResponsiveContainer></div>;
 }
