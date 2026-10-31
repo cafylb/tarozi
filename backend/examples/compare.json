@@ -1,0 +1,14 @@
+{
+  "channel": "wholesale",
+  "district": "Chilonzor",
+  "delivery": "delivery",
+  "max_age_hours": 24,
+  "baseline_branch_id": "50000000-0000-4000-8000-000000000001",
+  "items": [
+    { "product_id": "20000000-0000-4000-8000-000000000001", "quantity": 50 },
+    { "product_id": "20000000-0000-4000-8000-000000000002", "quantity": 100 },
+    { "product_id": "20000000-0000-4000-8000-000000000003", "quantity": 50 },
+    { "product_id": "20000000-0000-4000-8000-000000000004", "quantity": 40 },
+    { "product_id": "20000000-0000-4000-8000-000000000005", "quantity": 20 }
+  ]
+}

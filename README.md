@@ -31,3 +31,9 @@ Google client ID и secret загружаются сервером из `.env.lo
 Для аккаунтов требуется локальный сервер. Открытие HTML как файла поддерживает демо закупок, но не серверную авторизацию.
 
 Проверены сборка и локальные API: регистрация, пароль, сессия, редактирование профиля, выход, вход, повторный email, защита Origin, отказ поддельному callback. Браузер автоматически не открывался.
+
+## Grocery intelligence backend
+
+The separate [backend](backend/README.md) adds a Fastify/TypeScript API, Supabase/PostgreSQL schema, seller approval, dated offers/history, Restock Advisor, private saved lists, alerts and moderation. See [API integration](backend/docs/API.md) for connecting the frontend. Its Supabase bearer sessions are separate from the existing local demo account cookies. No existing accounts or secrets are migrated automatically.
+
+Run its offline checks with `cd backend && npm ci && npm run check`. A configured Supabase project or local Supabase stack is needed to run the persistent API; cloud hosting is not provisioned by the source code alone.
