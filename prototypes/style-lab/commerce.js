@@ -7,7 +7,15 @@ const sampleStores=[
  {id:'korzinka-boz-bozor',name:'Korzinka · Буз базар',address:'ул. Сайрам, 41',lat:41.327111,lng:69.323746,factor:1.03,source:'https://orgcatalog.com/en/orgs/korzinka-boz-bozor/'},
  {id:'korzinka-ttz-2',name:'Korzinka · ТТЗ-2',address:'ул. Белоножко, 24',lat:41.355708,lng:69.378292,factor:1.05,source:'https://orgcatalog.com/en/orgs/korzinka-ttz-2/'},
  {id:'korzinka-habib',name:'Korzinka Mahalla · Хабиб Абдуллаев',address:'ул. Мирзо Улугбека, 91А',lat:41.346470,lng:69.346080,factor:1.10,source:'https://orgcatalog.com/en/orgs/korzinka-mahalla-habib-abdullayev/'},
- {id:'korzinka-riyoziy',name:'Korzinka · Риёзий',address:'ул. Олтинтепа, 7',lat:41.311024,lng:69.328242,factor:1.07,source:'https://orgcatalog.com/en/orgs/korzinka-rivoziy/'}
+ {id:'korzinka-riyoziy',name:'Korzinka · Риёзий',address:'ул. Олтинтепа, 7',lat:41.311024,lng:69.328242,factor:1.07,source:'https://orgcatalog.com/en/orgs/korzinka-rivoziy/'},
+ {id:'korzinka-sampi',name:'Korzinka · Sampi Mall',address:'ТРЦ Sampi Mall, Ташкент',lat:41.355484,lng:69.334102,factor:1.09,source:'https://orgcatalog.com/en/orgs/korzinka-sampi-mall/'},
+ {id:'korzinka-asaka',name:'Korzinka Mahalla · Асака',address:'Дархан, Ташкент',lat:41.316686,lng:69.300122,factor:1.11,source:'https://orgcatalog.com/en/orgs/korzinka-mahalla-asaka/'},
+ {id:'korzinka-hamid',name:'Korzinka Mahalla · Хамид Олимжон',address:'Метро Хамид Олимжон, Ташкент',lat:41.319172,lng:69.298868,factor:1.08,source:'https://narxbozor.uz/orgs/smart-mustaqillik/'},
+ {id:'korzinka-elbek',name:'KorzinkaGo · Эльбек',address:'ул. Карасу, 36',lat:41.299449,lng:69.342081,factor:1.12,source:'https://narxbozor.uz/orgs/korzinka-go-elbek/'},
+ {id:'korzinka-salom',name:'Korzinka · Салом',address:'ул. Буюк Ипак Йули, 158А',lat:41.327699,lng:69.343327,factor:1.01,source:'https://orgcatalog.com/orgs/korzinka-salom/'},
+ {id:'korzinka-kuyluk',name:'Korzinka · Куйлюк',address:'ул. Мунис, Куйлюк-1',lat:41.244809,lng:69.310902,factor:1.00,source:'https://www.findlatitudeandlongitude.com/l/Korzinka.uz%2C%2BMunis%2Bstreet%2C%2BQo%27yliq%2B1%2Bmavzesi%2C%2BMirobod%2Btumani%2C%2BTashkent%2C%2B100000%2C%2BUzbekistan/5851778/gps-coordinates-converter/'},
+ {id:'korzinka-amore',name:'Korzinka · Amore Mio',address:'Ташкент · Amore Mio',lat:41.306428,lng:69.291224,factor:1.13,source:'https://commons.wikimedia.org/wiki/File:Korzinka_Amore_Mio_supermarketi.jpg'},
+ {id:'korzinka-yunusabad',name:'Korzinka · Юнусабад',address:'Юнусабад, Ташкент',lat:41.36940,lng:69.26561,factor:1.045,source:'https://uz.geoview.info/korzinka,11455129821n'}
 ];
 let marketCatalog={stores:[],items:[]},catalogError='',sellerItems=[],sellerStats=null,sellerError='',sellerBusy=false,sellerLoading=false,authRole='buyer',demoSession=false,editingItem=null,sellerDraft=null,storeDraft=null,selectedStore='',storeFilter='all',storeQuery='',storeLocation=null,searchTimer;
 const tr=(ru,en,uz)=>language==='en'?en:language==='uz'?uz:ru;
@@ -26,6 +34,9 @@ function chartPanel(title,key,sub=''){
  const stores=sampleStoresFor(activeProduct()).slice(0,4);
  const legend=key==='stores-history'?`<div class="chart-legend">${stores.map((store,index)=>`<span><i style="background:${['var(--accent)','#00bdb4','var(--ink)','var(--muted)'][index]}"></i>${esc(store.name)}</span>`).join('')}</div>`:'';
  return `<section class="analytics-panel"><div class="panel-title"><h2>${title}</h2>${sub?`<span class="meta">${sub}</span>`:''}</div>${graph(key)}${legend}</section>`;
+}
+function productStatsView(){
+ return `<div class="product-stats-heading"><button class="text-button" data-action="view" data-view="alerts">${icon('arrow-left')}${tr('Оповещения','Price alerts','Narx xabarlari')}</button><h1 id="main-content">${esc(productLabel(activeProduct()))}</h1></div>${marketInsights()}`;
 }
 function marketInsights(){
  const product=activeProduct(),history=meanHistory(product),difference=history.at(-1)-history[0],percent=difference/history[0]*100,offers=productOffers(product);

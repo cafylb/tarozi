@@ -43,7 +43,7 @@ function save() {
 
 function navigationButtons(mode = 'sidebar') {
   return activeNavigation().map(item => {
-    const active = state.page === item.id;
+    const active = (state.page==='product-stats'?'alerts':state.page)===item.id;
     if (mode === 'rail') return `<button class="rail-button ${active ? 'active' : ''}" data-action="view" data-view="${item.id}" aria-label="${item.label}" title="${item.label}" ${active ? 'aria-current="page"' : ''}>${icon(item.icon)}</button>`;
     if (mode === 'compact') return `<button data-action="view" data-view="${item.id}" class="${active ? 'active' : ''}" title="${item.label}" aria-label="${item.label}" ${active ? 'aria-current="page"' : ''}>${icon(item.icon)}</button>`;
     if (mode === 'top') return `<button data-action="view" data-view="${item.id}" class="${active ? 'active' : ''}" ${active ? 'aria-current="page"' : ''}>${item.label}</button>`;
@@ -101,11 +101,6 @@ function orderControls() {
   return `<div class="quantity-area"><label class="quantity-label" for="order-quantity"><span>Количество, ${product.unit}</span><span>от ${product.min} ${product.unit}</span></label><div class="quantity-row"><div class="stepper"><button data-action="quantity" data-direction="-1" aria-label="Уменьшить количество" ${state.quantity <= product.min ? 'disabled' : ''}>${icon('minus')}</button><input id="order-quantity" data-input="quantity" type="number" inputmode="numeric" min="${product.min}" max="${offer.stock}" step="1" value="${state.quantity}"><button data-action="quantity" data-direction="1" aria-label="Увеличить количество" ${state.quantity >= offer.stock ? 'disabled' : ''}>${icon('plus')}</button></div><strong class="num">${money(state.quantity * offer.price)} <small>сум</small></strong></div><button class="button primary full" data-action="add">${icon('plus')}В список закупки</button><div class="delivery-line">${icon('truck')}Доставка от ${money(offer.delivery)} сум</div>${state.feedback ? `<p class="inline-feedback" role="status">${icon('check')} ${esc(state.feedback)}</p>` : ''}</div>`;
 }
 
-function cartPreview() {
-  const sum = cartSummary(state.cart);
-  return `<section class="cart-preview" aria-label="Краткая закупка"><div class="preview-title"><h2>Список закупки</h2><span class="meta num">${sum.count} поз.</span></div>${state.cart.slice(0, 3).map(item => `<div class="preview-row"><span>${byId(item.productId).short}<span class="muted">${item.quantity} ${byId(item.productId).unit}</span></span><span class="num">${money(byId(item.productId).prices[suppliers.findIndex(s => s.id === item.supplierId)] * item.quantity)}</span></div>`).join('')}${sum.count > 3 ? `<p class="meta">Ещё ${sum.count - 3} поз.</p>` : ''}${sum.count === 0 ? '<p class="meta">Добавьте товары из предложений.</p>' : ''}<div class="preview-bottom"><div><small class="muted">С доставкой</small><strong class="num" style="display:block">${money(sum.total)} <small>сум</small></strong></div><button class="text-button" data-action="view" data-view="cart">Открыть список ${icon('arrow-right')}</button></div></section>`;
-}
-
 function footer() {
   return `<footer class="app-footer"><span>${icon('scales')}Smart Market Prices · Tashkent</span><span>Цены и поставщики — демонстрационные</span></footer>`;
 }
@@ -115,7 +110,7 @@ function marketStudio() {
   const delta = change(product);
   const title = state.query.trim()?productLabel(product):state.page === 'favorites' ? 'То, что всегда под рукой' : 'Закупка на сегодня';
   const difference = Math.max(...product.prices) - Math.min(...product.prices);
-  return `<header class="heading-row"><div><h1 id="main-content" tabindex="-1">${title}</h1><p>Дилшод, ${product.short.toLocaleLowerCase('ru')} ${delta <= 0 ? 'подешевел' : 'подорожал'} на ${money(Math.abs(delta))} сум за неделю.</p></div><div class="heading-right"><div class="meta">Суббота, 31 октября<br>Магазин в Чиланзаре</div></div></header>${filters()}<nav class="studio-product-tabs" aria-label="Товары">${visibleProducts().map(item => `<button class="studio-product-tab ${state.productId === item.id ? 'active' : ''}" data-action="product" data-id="${item.id}" aria-pressed="${state.productId === item.id}"><span>${item.short}</span>${state.productId===item.id?icon('check-circle','studio-product-check'):''}<div><strong class="num">${money(offersFor(item, state.market)[0].price)}</strong><small>/${item.unit==='кг'?(language==='ru'?'кг':'kg'):(language==='ru'?'л':'l')}</small></div></button>`).join('')}</nav>${!visibleProducts().length ? emptyProducts() : ''}<div class="studio-feature-grid"><div><section class="studio-research"><div class="quote-top"><div><h2>${product.name}</h2><p class="meta">${product.origin} · ${product.pack}</p></div>${favoriteButton(product)}</div>${priceAndChange()}<div class="studio-chart-well">${rangeControls()}<div class="chart" data-chart></div></div><p class="studio-source">${icon('check-circle')}Сравнение одинаковых единиц · 3 поставщика</p></section><section class="studio-context"><div><h2>Один товар. Разные цены.</h2><p>Разница между самым дорогим и дешёвым предложением.</p></div><span class="num">${money(difference)}<small class="muted" style="display:block;text-align:right">сум / ${product.unit}</small></span></section>${state.query.trim()?'':cartPreview()}</div><section class="studio-purchase"><h2>Выберите предложение</h2><p class="meta">${product.name} · цена за ${product.unit}</p><div class="offer-heading"><span>Поставщик</span><span class="muted">Сум / ${product.unit}</span></div>${offerOptions()}${orderControls()}</section></div>`;
+  return `<header class="heading-row"><div><h1 id="main-content" tabindex="-1">${title}</h1><p>Дилшод, ${product.short.toLocaleLowerCase('ru')} ${delta <= 0 ? 'подешевел' : 'подорожал'} на ${money(Math.abs(delta))} сум за неделю.</p></div><div class="heading-right"><div class="meta">Суббота, 31 октября<br>Магазин в Чиланзаре</div></div></header>${filters()}<nav class="studio-product-tabs" aria-label="Товары">${visibleProducts().map(item => `<button class="studio-product-tab ${state.productId === item.id ? 'active' : ''}" data-action="product" data-id="${item.id}" aria-pressed="${state.productId === item.id}"><span>${item.short}</span>${state.productId===item.id?icon('check-circle','studio-product-check'):''}<div><strong class="num">${money(offersFor(item, state.market)[0].price)}</strong><small>/${item.unit==='кг'?(language==='ru'?'кг':'kg'):(language==='ru'?'л':'l')}</small></div></button>`).join('')}</nav>${!visibleProducts().length ? emptyProducts() : ''}<div class="studio-feature-grid"><div><section class="studio-research"><div class="quote-top"><div><h2>${product.name}</h2><p class="meta">${product.origin} · ${product.pack}</p></div>${favoriteButton(product)}</div>${priceAndChange()}<div class="studio-chart-well">${rangeControls()}<div class="chart" data-chart></div></div><p class="studio-source">${icon('check-circle')}Сравнение одинаковых единиц · 3 поставщика</p></section><section class="studio-context"><div><h2>Один товар. Разные цены.</h2><p>Разница между самым дорогим и дешёвым предложением.</p></div><span class="num">${money(difference)}<small class="muted" style="display:block;text-align:right">сум / ${product.unit}</small></span></section></div><section class="studio-purchase"><h2>Выберите предложение</h2><p class="meta">${product.name} · цена за ${product.unit}</p><div class="offer-heading"><span>Поставщик</span><span class="muted">Сум / ${product.unit}</span></div>${offerOptions()}${orderControls()}</section></div>`;
 }
 
 function cartView() {
@@ -131,7 +126,7 @@ function cartView() {
 function alertsView() {
   return `${heading('Оповещения о цене', 'Выберите товары и укажите цену, за которой хотите следить.')}<div class="alerts-grid">${products.map(product => {
     const enabled = state.alerts.has(product.id);
-    return `<section class="alert-card"><div class="quote-top"><div><h2>${product.name}</h2><p>Текущая демо-цена за ${product.unit}</p></div>${icon('bell')}</div><div class="quote-price"><strong class="num">${money(offersFor(product)[0].price)}</strong><span>сум / ${product.unit}</span></div><label for="threshold-${product.id}">Цена ниже<input type="number" id="threshold-${product.id}" data-input="threshold" data-id="${product.id}" min="1" step="100" value="${state.thresholds[product.id] || Math.floor(offersFor(product)[0].price * .95 / 100) * 100}">сум</label><button class="button" data-action="alert" data-id="${product.id}" aria-pressed="${enabled}">${icon(enabled ? 'check' : 'plus')}${enabled ? 'Отслеживается в демо' : 'Отслеживать цену'}</button></section>`;
+    return `<section class="alert-card"><div class="quote-top"><div><h2><button class="alert-product-link" data-action="product-stats" data-id="${product.id}">${product.name}${icon('arrow-up-right')}</button></h2><p>Текущая демо-цена за ${product.unit}</p></div>${icon('bell')}</div><div class="quote-price"><strong class="num">${money(offersFor(product)[0].price)}</strong><span>сум / ${product.unit}</span></div><label for="threshold-${product.id}">Цена ниже<input type="number" id="threshold-${product.id}" data-input="threshold" data-id="${product.id}" min="1" step="100" value="${state.thresholds[product.id] || Math.floor(offersFor(product)[0].price * .95 / 100) * 100}">сум</label><button class="button" data-action="alert" data-id="${product.id}" aria-pressed="${enabled}">${icon(enabled ? 'check' : 'plus')}${enabled ? 'Отслеживается в демо' : 'Отслеживать цену'}</button></section>`;
   }).join('')}</div><p class="cart-note">Демонстрационные настройки. Уведомления не отправляются.</p>`;
 }
 
@@ -141,6 +136,7 @@ function pageBody(style) {
   if(!profile)return authView();
   if(state.page==='stores')return storesView();
   if(state.page==='seller')return sellerView();
+  if(state.page==='product-stats')return productStatsView();
   if (state.page === 'chat') return '<div data-chat-page></div>';
   if (state.page === 'profile') return profileView();
   if (state.page === 'cart') return cartView();
@@ -210,6 +206,7 @@ document.addEventListener('click', event => {
   const action = target.dataset.action;
   state.feedback = '';
   if (action === 'view') { state.page = target.dataset.view; state.confirmed = false; syncSelected(); if(state.page==='seller')queueMicrotask(loadSeller); }
+  else if (action === 'product-stats') {if(!byId(target.dataset.id))return;state.productId=target.dataset.id;state.market='all';state.quantity=activeProduct().quantity;state.supplierId=availableOffers()[0].id;state.range=30;state.page='product-stats';}
   else if (action === 'product') { state.productId = target.dataset.id; state.quantity = activeProduct().quantity; state.supplierId = availableOffers()[0].id; }
   else if (action === 'category') { state.category = target.dataset.category; syncSelected(); }
   else if (action === 'market') { state.market = target.dataset.market; state.supplierId = availableOffers()[0].id; state.page = 'market'; }
@@ -239,6 +236,7 @@ document.addEventListener('click', event => {
   else if (action === 'reset-filters') { state.query = ''; state.category = 'all'; state.page = 'market'; syncSelected(); }
   else return;
   refresh();
+  if(action==='product-stats')window.scrollTo?.({top:0,left:0,behavior:'auto'});
 });
 
 document.addEventListener('input', event => {
@@ -271,7 +269,7 @@ function finishRender() {
   assistantHost.className='app studio'+(dark?' dark':'');
   Charts.assistant(assistantHost,{language,target:document.querySelector('[data-chat-page]'),names:Object.fromEntries(products.map(product=>[product.id,language==='ru'?product.name:(TRANSLATIONS[product.name]?.[language==='uz'?1:0]||product.name)]))});
   const nav=document.querySelector('.studio-nav');
-  if(nav){nav.hidden=!profile;nav.innerHTML='';nav.setAttribute('data-nav-header','');Charts.nav(nav,activeNavigation().map(item=>({id:item.id,label:language==='ru'?item.label:(TRANSLATIONS[item.label]?.[language==='uz'?1:0]||item.label)})),state.page,language==='ru'?'Главная навигация':language==='uz'?'Asosiy navigatsiya':'Main navigation');}
+  if(nav){nav.hidden=!profile;nav.innerHTML='';nav.setAttribute('data-nav-header','');Charts.nav(nav,activeNavigation().map(item=>({id:item.id,label:language==='ru'?item.label:(TRANSLATIONS[item.label]?.[language==='uz'?1:0]||item.label)})),state.page==='product-stats'?'alerts':state.page,language==='ru'?'Главная навигация':language==='uz'?'Asosiy navigatsiya':'Main navigation');}
 }
 function profileView() {
   if (!authReady) return '<div class="auth-loading" role="status" aria-label="Загрузка"><span></span></div>';
