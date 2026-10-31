@@ -16,6 +16,10 @@ export const products = [
 
 export const categories = [{ id: 'all', name: 'Все товары' }, { id: 'grocery', name: 'Бакалея' }, { id: 'vegetables', name: 'Овощи' }, { id: 'oil', name: 'Масла' }];
 export const money = value => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(value);
+export function matchesSearch(text,query){
+ const words=value=>String(value).normalize('NFKC').toLocaleLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+ const haystack=words(text);return words(query).every(token=>haystack.some(word=>word.startsWith(token)));
+}
 export const byId = id => products.find(product => product.id === id);
 export const supplierById = id => suppliers.find(supplier => supplier.id === id);
 export const offersFor = (product, market = 'all') => suppliers.map((supplier, index) => ({ ...supplier, price: product.prices[index], stock: product.stock - index * 100 })).filter(offer => market === 'all' || offer.id === market).sort((a, b) => a.price - b.price);
@@ -34,7 +38,7 @@ export function cartSummary(cart) {
 }
 export function filteredProducts({ query = '', category = 'all', favorites, favoriteOnly = false, sort = 'default' }) {
   const normalized = query.trim().toLocaleLowerCase('ru');
-  const result = products.filter(product => (category === 'all' || product.category === category) && (!favoriteOnly || favorites.has(product.id)) && `${product.name} ${product.origin}`.toLocaleLowerCase('ru').includes(normalized));
+  const result = products.filter(product => (category === 'all' || product.category === category) && (!favoriteOnly || favorites.has(product.id)) && matchesSearch(`${product.name} ${product.origin}`,normalized));
   if (sort === 'price') result.sort((a, b) => Math.min(...a.prices) - Math.min(...b.prices));
   if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
   return result;

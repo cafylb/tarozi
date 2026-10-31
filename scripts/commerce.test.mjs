@@ -5,6 +5,16 @@ import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 import {createAuth} from './auth.mjs';
+import {matchesSearch,filteredProducts} from '../prototypes/style-lab/model.mjs';
+
+test('rice search excludes matches inside unrelated words',()=>{
+ assert.deepEqual(filteredProducts({query:'рис'}).map(product=>product.id),['rice']);
+ assert.deepEqual(filteredProducts({query:'РИС ЛАЗЕР'}).map(product=>product.id),['rice']);
+ assert.equal(matchesSearch('Белый, кристаллический','рис'),false);
+ assert.equal(matchesSearch('Рис «Лазер» Laser rice Lazer guruch','Rice'),true);
+ assert.equal(matchesSearch('Рис «Лазер» Laser rice Lazer guruch','guruch'),true);
+ assert.equal(matchesSearch('Сахар-песок','сах'),true);
+});
 
 test('roles, seller ownership, inventory, search analytics and persistence',async()=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'tarozi-commerce-'));
