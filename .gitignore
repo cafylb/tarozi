@@ -1,0 +1,8 @@
+node_modules/
+.research/
+.taste-skill/
+*.log
+
+.env*
+!.env.example
+.local/

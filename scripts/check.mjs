@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
+import { products, suppliers, offersFor, initialCart, cartSummary, filteredProducts } from '../prototypes/style-lab/model.mjs';
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+for (const product of products) {
+  assert.equal(product.prices.length, suppliers.length);
+  assert.equal(Math.min(...product.prices), product.history.at(-1));
+  assert.equal(product.history.at(-1), product.month.at(-1));
+  assert(product.quantity >= product.min);
+  assert(offersFor(product).every(offer => offer.stock >= product.quantity));
+}
+const sum = cartSummary(initialCart());
+assert.equal(sum.goods, 1066100);
+assert.equal(sum.delivery, 35000);
+assert.equal(sum.total, 1101100);
+assert.equal(cartSummary([]).total, 0);
+assert.equal(filteredProducts({ query: '  САХАР  ' }).length, 1);
+assert.equal(filteredProducts({ category: 'vegetables' }).length, 2);
+assert.equal(filteredProducts({ query: 'несуществующий товар' }).length, 0);
+assert.equal(filteredProducts({ favorites: new Set(['rice']), favoriteOnly: true })[0].id, 'rice');
+const html = await fs.readFile(path.join(root, 'index.html'), 'utf8');
+const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+new vm.Script(script, { filename: 'index.html inline JavaScript' });
+assert(!/url\(https?:/.test(html));
+assert(html.includes('Демоданные'));
+assert(!html.includes('class="proto-picker-item"'));
+console.log('Passed: sample prices, 7d/30d agreement, supplier stock, cart arithmetic, grouped delivery, empty cart, search, category, favorites, bundled JavaScript syntax, offline assets, Studio without variant picker.');
