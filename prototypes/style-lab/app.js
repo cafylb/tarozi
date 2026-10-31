@@ -25,7 +25,8 @@ const navigation = [
   { id: 'market', label: 'Цены рынка', icon: 'chart-line' },
   { id: 'cart', label: 'Моя закупка', icon: 'shopping-bag' },
   { id: 'favorites', label: 'Избранное', icon: 'heart' },
-  { id: 'alerts', label: 'Оповещения', icon: 'bell' }
+  { id: 'alerts', label: 'Оповещения', icon: 'bell' },
+  { id: 'chat', label: 'Чат', icon: 'receipt' }
 ];
 const activeProduct = () => byId(state.productId);
 const availableOffers = () => offersFor(activeProduct(), state.market);
@@ -200,7 +201,7 @@ document.addEventListener('click', event => {
   if (!target || target.disabled) return;
   const action = target.dataset.action;
   state.feedback = '';
-  if (action === 'view') { state.page = target.dataset.view; state.confirmed = false; syncSelected(); }
+  if (action === 'view') { if(target.dataset.view==='chat'){document.dispatchEvent(new CustomEvent('tarozi:assistant-open'));return;}state.page = target.dataset.view; state.confirmed = false; syncSelected(); }
   else if (action === 'product') { state.productId = target.dataset.id; state.quantity = activeProduct().quantity; state.supplierId = availableOffers()[0].id; }
   else if (action === 'category') { state.category = target.dataset.category; syncSelected(); }
   else if (action === 'market') { state.market = target.dataset.market; state.supplierId = availableOffers()[0].id; state.page = 'market'; }

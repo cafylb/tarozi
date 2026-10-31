@@ -456,7 +456,7 @@ kbd { border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; line-
 .studio.dark .studio-context .num {color:var(--brand-cyan);}
 .studio-top .wordmark .mark {display:inline-flex;}
 @media(max-width:1100px){.studio-top{gap:16px;padding-left:24px;padding-right:24px;}.header-tab button{padding:0 12px;font-size:12px;}.profile-trigger>span:last-child{display:none;}}
-@media(max-width:760px){.studio-top{height:auto;flex-wrap:wrap;padding:18px 18px 16px;gap:16px;}.studio-nav{order:3;width:100%;overflow-x:auto;scrollbar-width:none;padding:4px 0;}.header-pill{margin:auto;}.header-tab button{min-height:40px;padding:0 15px;}.header-cursor{height:40px;}}
+@media(max-width:1000px){.studio-top{height:auto;flex-wrap:wrap;padding:18px 18px 16px;gap:16px;}.studio-nav{order:3;width:100%;overflow-x:auto;scrollbar-width:none;padding:4px 0;}.header-pill{margin:auto;}.header-tab button{min-height:40px;padding:0 15px;}.header-cursor{height:40px;}}
 
 .header-tab button[data-highlighted="true"] {color:var(--ground);}
 #assistant-root.app {min-height:0;display:contents;}

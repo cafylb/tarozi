@@ -15,6 +15,7 @@ export default function AssistantChat({language,names}:AssistantProps) {
  const number=(value:number)=>new Intl.NumberFormat(language).format(value);
  useEffect(()=>{const abort=new AbortController();fetch('/api/assistant',{signal:abort.signal}).then(response=>response.json()).then(data=>setMode(data.mode==='ai'?'ai':'catalog')).catch(()=>{});return()=>{abort.abort();controller.current?.abort();};},[]);
  useEffect(()=>{if(open&&!dialog.current?.open){dialog.current?.showModal();input.current?.focus();}else if(!open&&dialog.current?.open)dialog.current.close();},[open]);
+ useEffect(()=>{const show=()=>setOpen(true);document.addEventListener('tarozi:assistant-open',show);return()=>document.removeEventListener('tarozi:assistant-open',show);},[]);
  useEffect(()=>{bottom.current?.scrollIntoView({block:'end',behavior:'instant'});},[messages,busy,open]);
  async function send(value:string) {
   const message=value.trim();if(!message||busy)return;
