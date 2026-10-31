@@ -4,7 +4,7 @@ function translatePage() {
  const pattern=new RegExp(entries.map(([key])=>key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'g');
  const translate=value=>value.replace(pattern,key=>TRANSLATIONS[key]?.[language==='uz'?1:0] || key);
  const walker=document.createTreeWalker(stage,NodeFilter.SHOW_TEXT);
- let node; while(node=walker.nextNode()) if(!node.parentElement?.closest('[data-chat-page],[data-nav-header]')&&!['SCRIPT','STYLE'].includes(node.parentElement?.tagName)) node.nodeValue=translate(node.nodeValue);
+ let node; while(node=walker.nextNode()) if(!node.parentElement?.closest('[data-chat-page],[data-nav-header],[data-select-root]')&&!['SCRIPT','STYLE'].includes(node.parentElement?.tagName)) node.nodeValue=translate(node.nodeValue);
  stage.querySelectorAll('[placeholder],[aria-label],[title]').forEach(el=>['placeholder','aria-label','title'].forEach(attr=>{if(el.hasAttribute(attr))el.setAttribute(attr,translate(el.getAttribute(attr)));}));
 }
 

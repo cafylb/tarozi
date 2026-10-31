@@ -68,7 +68,7 @@ function search() {
 }
 
 function filters() {
-  return `<div class="filter-row">${search()}<div class="filters-right"><span class="meta num">${visibleProducts().length} из ${products.length} товаров</span><label class="select-wrap">${icon('sliders-horizontal')}<span class="sr-only">Сортировка товаров</span><select data-input="sort" id="product-sort"><option value="default" ${state.sort === 'default' ? 'selected' : ''}>По умолчанию</option><option value="price" ${state.sort === 'price' ? 'selected' : ''}>Сначала дешевле</option><option value="name" ${state.sort === 'name' ? 'selected' : ''}>По названию</option></select></label></div></div>`;
+  return `<div class="filter-row">${search()}<div class="filters-right"><span class="meta num">${visibleProducts().length} из ${products.length} товаров</span><div class="select-wrap" data-select-kind="sort"></div></div></div>`;
 }
 
 function favoriteButton(product) {
@@ -178,7 +178,7 @@ function drawCharts() {
 }
 
 function releaseCharts() {
-  stage.querySelectorAll('[data-chart],[data-nav-header],[data-analytics-chart],[data-store-map],[data-store-picker]').forEach(element => Charts.release(element));
+  stage.querySelectorAll('[data-chart],[data-nav-header],[data-analytics-chart],[data-store-map],[data-store-picker],[data-select-kind]').forEach(element => Charts.release(element));
 }
 
 function syncSelected() {
@@ -282,8 +282,13 @@ function finishRender() {
   document.querySelector('meta[name="theme-color"]').content = dark ? '#0b0b0b' : '#ffffff';
   document.documentElement.style.background = dark ? '#0b0b0b' : '#ffffff';
   const account = document.querySelector('.studio-top .account');
-  if (account) account.outerHTML = `<div class="account-controls"><label><span class="sr-only">Язык</span><select id="language-select" aria-label="Language"><option value="ru" ${language==='ru'?'selected':''}>RU</option><option value="en" ${language==='en'?'selected':''}>EN</option><option value="uz" ${language==='uz'?'selected':''}>UZ</option></select></label><button class="icon-btn" data-settings="theme" aria-label="Сменить тему" title="Сменить тему">${icon('sun')}</button><button class="profile-trigger" data-settings="profile"><span class="avatar">${esc(profile?.name?.slice(0,1) || 'Д')}</span><span>${esc(profile?.name || 'Аккаунт')}</span></button></div>`;
+  if (account) account.outerHTML = `<div class="account-controls"><div data-select-kind="language"></div><button class="icon-btn" data-settings="theme" aria-label="Сменить тему" title="Сменить тему">${icon('sun')}</button><button class="profile-trigger" data-settings="profile"><span class="avatar">${esc(profile?.name?.slice(0,1) || 'Д')}</span><span>${esc(profile?.name || 'Аккаунт')}</span></button></div>`;
   if (language !== 'ru') translatePage();
+  document.querySelectorAll('[data-select-kind]').forEach(element=>{
+   const kind=element.dataset.selectKind,isLanguage=kind==='language';
+   element.setAttribute('data-select-root','');
+   Charts.select(element,{kind,id:isLanguage?'language-select':'product-sort',value:isLanguage?language:state.sort,label:isLanguage?tr('Язык','Language','Til'):tr('Сортировка товаров','Sort products','Mahsulotlarni saralash'),container:app,options:isLanguage?[{value:'ru',label:'RU'},{value:'en',label:'EN'},{value:'uz',label:'UZ'}]:[{value:'default',label:tr('По умолчанию','Default order','Standart tartib')},{value:'price',label:tr('Сначала дешевле','Lowest price first','Avval arzonlari')},{value:'name',label:tr('По названию','By name','Nomi bo‘yicha')}]});
+  });
   let assistantHost=document.getElementById('assistant-root');
   if(!assistantHost){assistantHost=document.createElement('div');assistantHost.id='assistant-root';document.body.appendChild(assistantHost);}
   assistantHost.className='app studio'+(dark?' dark':'');
@@ -344,4 +349,12 @@ document.addEventListener('tarozi:offer',event=>{
  const offer=event.detail;const product=byId(offer?.productId);if(!product||!supplierById(offer?.supplierId))return;
  const canonical=offersFor(product).find(item=>item.id===offer.supplierId);if(!canonical)return;
  state.page='market';state.market='all';state.category='all';state.query='';state.productId=product.id;state.supplierId=canonical.id;state.quantity=Math.max(product.min,Math.min(canonical.stock,Number(offer.quantity)||product.quantity));state.feedback='';refresh();
+});
+
+document.addEventListener('tarozi:select',event=>{
+ const {id,value}=event.detail||{};
+ if(id==='language-select'&&['ru','en','uz'].includes(value)){language=value;localStorage.setItem('market-language',language);}
+ else if(id==='product-sort'&&['default','price','name'].includes(value))state.sort=value;
+ else return;
+ refresh();document.getElementById(id)?.focus({preventScroll:true});
 });

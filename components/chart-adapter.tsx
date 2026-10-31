@@ -5,9 +5,14 @@ import Chart from './ui/chart';
 import NavHeader,{NavItem} from './ui/nav-header';
 import AssistantChat,{AssistantProps} from './ui/assistant-chat';
 import StoreMap,{StoreMapProps} from './ui/store-map';
+import MenuSelect,{MenuSelectProps} from './ui/menu-select';
 type Options={labels:string[];series:{name:string;values:number[]}[];yTicks:number[];type:'line'|'area'|'bar'|'horizontal-bar';locale:string;unit:string;band?:{min:number[];max:number[]};reference?:number;referenceLabel?:string;highlightIndex?:number};
 const roots=new WeakMap<HTMLElement,Root>();
 const api={
+ select(element:HTMLElement,props:MenuSelectProps) {
+  let root=roots.get(element);if(!root){root=createRoot(element);roots.set(element,root);}
+  flushSync(()=>root.render(<MenuSelect {...props}/>));
+ },
  map(element:HTMLElement,props:StoreMapProps) {
   let root=roots.get(element);if(!root){root=createRoot(element);roots.set(element,root);}
   flushSync(()=>root.render(<StoreMap {...props}/>));
