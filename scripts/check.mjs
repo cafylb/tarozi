@@ -14,8 +14,8 @@ for (const product of products) {
 }
 const sum = cartSummary(initialCart());
 assert.equal(sum.goods, 1066100);
-assert.equal(sum.delivery, 35000);
-assert.equal(sum.total, 1101100);
+assert.equal(sum.delivery, undefined);
+assert.equal(sum.total, 1066100);
 assert.equal(cartSummary([]).total, 0);
 assert.equal(filteredProducts({ query: '  САХАР  ' }).length, 1);
 assert.equal(filteredProducts({ category: 'vegetables' }).length, 2);
@@ -27,4 +27,4 @@ new vm.Script(script, { filename: 'index.html inline JavaScript' });
 assert(!/url\(https?:/.test(html));
 assert(html.includes('Демоданные'));
 assert(!html.includes('class="proto-picker-item"'));
-console.log('Passed: sample prices, 7d/30d agreement, supplier stock, cart arithmetic, grouped delivery, empty cart, search, category, favorites, bundled JavaScript syntax, offline assets, Studio without variant picker.');
+console.log('Passed: sample prices, 7d/30d agreement, supplier stock, cart arithmetic, empty cart, search, category, favorites, bundled JavaScript syntax, offline assets, Studio without variant picker.');

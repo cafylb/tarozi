@@ -1,8 +1,8 @@
 // Illustrative prices and supplier identities, not live market information.
 export const suppliers = [
-  { id: 'baraka', name: 'Baraka Savdo', market: 'Куйлюк', initials: 'BS', delivery: 20000, pickup: 'Сегодня, 12:00–14:00' },
-  { id: 'chorsu', name: 'Chorsu Opt', market: 'Чорсу', initials: 'CO', delivery: 15000, pickup: 'Сегодня, 14:00–16:00' },
-  { id: 'fayz', name: 'Fayz Trade', market: 'Фархадский', initials: 'FT', delivery: 18000, pickup: 'Завтра, 09:00–11:00' }
+  { id: 'baraka', name: 'Baraka Savdo', market: 'Куйлюк', initials: 'BS' },
+  { id: 'chorsu', name: 'Chorsu Opt', market: 'Чорсу', initials: 'CO' },
+  { id: 'fayz', name: 'Fayz Trade', market: 'Фархадский', initials: 'FT' }
 ];
 
 export const products = [
@@ -32,9 +32,8 @@ export const initialCart = () => [
 ];
 export function cartSummary(cart) {
   const goods = cart.reduce((sum, item) => sum + byId(item.productId).prices[suppliers.findIndex(supplier => supplier.id === item.supplierId)] * item.quantity, 0);
-  const delivery = [...new Set(cart.map(item => item.supplierId))].reduce((sum, id) => sum + supplierById(id).delivery, 0);
   const benchmark = cart.reduce((sum, item) => sum + average(byId(item.productId)) * item.quantity, 0);
-  return { goods, delivery, total: goods + delivery, benchmark, difference: benchmark - goods, count: cart.length, supplierCount: new Set(cart.map(item => item.supplierId)).size };
+  return { goods, total: goods, benchmark, difference: benchmark - goods, count: cart.length, supplierCount: new Set(cart.map(item => item.supplierId)).size };
 }
 export function filteredProducts({ query = '', category = 'all', favorites, favoriteOnly = false, sort = 'default' }) {
   const normalized = query.trim().toLocaleLowerCase('ru');
