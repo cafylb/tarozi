@@ -20,3 +20,5 @@ Object.assign(TRANSLATIONS,{"Морковь":["Carrots","Sabzi"],"Томатна
 Object.assign(TRANSLATIONS,{"Морковь":["Carrots","Sabzi"],"Томатная паста":["Tomato paste","Tomat pastasi"],"Т. паста":["Tomato paste","Tomat"],"Масло сливочное":["Butter","Sariyog‘"],"Сл. масло":["Butter","Sariyog‘"],"Чай чёрный":["Black tea","Qora choy"],"Чай":["Tea","Choy"],"Яйца куриные":["Eggs","Tuxum"],"Яйца":["Eggs","Tuxum"],"Макароны":["Pasta","Makaron"]});
 
 Object.assign(TRANSLATIONS,{"шт":["pcs","dona"]});
+
+Object.assign(TRANSLATIONS,{"Цена за":["Price per","Birlik narxi"],"Отслеживается":["Tracking","Kuzatilmoqda"],"Уведомления не отправляются.":["Notifications are not sent.","Xabarlar yuborilmaydi."]});

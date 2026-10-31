@@ -1,7 +1,7 @@
 const esc = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const icon = (name, className = '') => `<svg class="icon ${className}" viewBox="0 0 256 256" aria-hidden="true">${ICONS[name] || ICONS['package']}</svg>`;
 const wordmark = () => '<div class="wordmark" aria-label="Tarozi"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Tarozi</span></div>';
-const demoStamp = () => '<span class="demo-stamp">Демоданные</span>';
+
 function stockFor(productId, supplierId) {
   return offersFor(byId(productId)).find(offer => offer.id === supplierId).stock;
 }
@@ -122,7 +122,7 @@ function marketStudio() {
 
 function cartView() {
   const summary = cartSummary(state.cart);
-  return `${heading('Моя закупка', `${summary.count} поз. · ${summary.supplierCount} поставщика · демонстрационный список`)}${state.cart.length ? `<div class="cart-layout"><section class="cart-list" aria-label="Товары в закупке">${state.cart.map((item, index) => {
+  return `${heading('Моя закупка', `${summary.count} поз. · ${summary.supplierCount} поставщика`)}${state.cart.length ? `<div class="cart-layout"><section class="cart-list" aria-label="Товары в закупке">${state.cart.map((item, index) => {
     const product = byId(item.productId);
     const supplier = supplierById(item.supplierId);
     const price = product.prices[suppliers.indexOf(supplier)];
@@ -133,8 +133,8 @@ function cartView() {
 function alertsView() {
   return `${heading('Оповещения о цене', 'Выберите товары и укажите цену, за которой хотите следить.')}<div class="alerts-grid">${products.map(product => {
     const enabled = state.alerts.has(product.id);
-    return `<section class="alert-card"><div class="quote-top"><div><h2><button class="alert-product-link" data-action="product-stats" data-id="${product.id}">${product.name}${icon('arrow-up-right')}</button></h2><p>Текущая демо-цена за ${product.unit}</p></div>${icon('bell')}</div><div class="quote-price"><strong class="num">${money(offersFor(product)[0].price)}</strong><span>сум / ${product.unit}</span></div><label for="threshold-${product.id}">Цена ниже<input type="number" id="threshold-${product.id}" data-input="threshold" data-id="${product.id}" min="1" step="100" value="${state.thresholds[product.id] || Math.floor(offersFor(product)[0].price * .95 / 100) * 100}">сум</label><button class="button" data-action="alert" data-id="${product.id}" aria-pressed="${enabled}">${icon(enabled ? 'check' : 'plus')}${enabled ? 'Отслеживается в демо' : 'Отслеживать цену'}</button></section>`;
-  }).join('')}</div><p class="cart-note">Демонстрационные настройки. Уведомления не отправляются.</p>`;
+    return `<section class="alert-card"><div class="quote-top"><div><h2><button class="alert-product-link" data-action="product-stats" data-id="${product.id}">${product.name}${icon('arrow-up-right')}</button></h2><p>Цена за ${product.unit}</p></div>${icon('bell')}</div><div class="quote-price"><strong class="num">${money(offersFor(product)[0].price)}</strong><span>сум / ${product.unit}</span></div><label for="threshold-${product.id}">Цена ниже<input type="number" id="threshold-${product.id}" data-input="threshold" data-id="${product.id}" min="1" step="100" value="${state.thresholds[product.id] || Math.floor(offersFor(product)[0].price * .95 / 100) * 100}">сум</label><button class="button" data-action="alert" data-id="${product.id}" aria-pressed="${enabled}">${icon(enabled ? 'check' : 'plus')}${enabled ? 'Отслеживается' : 'Отслеживать цену'}</button></section>`;
+  }).join('')}</div><p class="cart-note">Уведомления не отправляются.</p>`;
 }
 
 function activeNavigation(){return profile?.role==='seller'?[...navigation.slice(0,-1),{id:'seller',label:'Кабинет',icon:'storefront'},navigation.at(-1)]:navigation;}
@@ -148,7 +148,7 @@ function pageBody(style) {
   if (state.page === 'profile') return profileView();
   if (state.page === 'cart') return cartView();
   if (state.page === 'alerts') return alertsView();
-  if (!visibleProducts().length) return `${heading(pageName(), 'Ташкент · демонстрационные предложения')}${tabs()}${filters()}${emptyProducts()}`;
+  if (!visibleProducts().length) return `${heading(pageName(), 'Ташкент')}${tabs()}${filters()}${emptyProducts()}`;
   return marketStudio()+marketInsights();
 }
 
@@ -172,7 +172,7 @@ function drawCharts() {
   document.querySelectorAll('[data-chart]').forEach(element => {
     if (element.dataset.drawn) return;
     element.dataset.drawn = 'true';element.dataset.motionChart='main:'+product.id+':'+state.range+':'+state.chartType;
-    Charts.line(element, { type:state.chartType, locale:language, unit, labels, series: [{ name: `${seriesName}, ${unit} / ${product.unit}`, values }], height: () => element.clientHeight || 170, yTicks, format: value => `${money(value)} сум`, tickFormat: money, xAt: state.range === 7 ? [0, 2, 4, 6] : [0, 4, 8, 12], label: `Демонстрационная минимальная цена: ${product.name}` });
+    Charts.line(element, { type:state.chartType, locale:language, unit, labels, series: [{ name: `${seriesName}, ${unit} / ${product.unit}`, values }], height: () => element.clientHeight || 170, yTicks, format: value => `${money(value)} сум`, tickFormat: money, xAt: state.range === 7 ? [0, 2, 4, 6] : [0, 4, 8, 12], label: `Минимальная цена: ${product.name}` });
   });
   if (language !== 'ru') translatePage();
 }
@@ -294,7 +294,7 @@ function finishRender() {
 function profileView() {
   if (!authReady) return '<div class="auth-loading" role="status" aria-label="Загрузка"><span></span></div>';
   if (!profile) return authView();
-  return `<section class="profile-page"><header class="heading-row"><div><h1 id="main-content">Профиль</h1><p>Ваш аккаунт и магазин</p></div></header><div class="profile-layout"><div class="profile-summary"><span class="avatar profile-avatar">${esc(profile?.name?.slice(0,1)||'Д')}</span><h2>${esc(profile?.name||'Дилшод Каримов')}</h2><p class="muted">${esc(profile?.email||'Локальный демо-профиль')}</p><p class="meta">${profile.role==='seller'?'Продавец':'Покупатель'} · Ташкент</p></div><form id="profile-form" class="profile-form">${authError?`<p class="negative" role="alert">${esc(authError)}</p>`:''}<label>Имя<input name="name" required maxlength="80" value="${esc(profile?.name||'Дилшод Каримов')}"></label><label>Email<input name="email" type="email" readonly value="${esc(profile?.email||'')}"></label><label>Название магазина<input name="store" required maxlength="100" value="${esc(profile?.store||'Магазин Дилшода')}"></label><button class="button primary" type="submit">Сохранить профиль</button><div class="oauth-section"><p class="meta">${profile.provider==='demo'?tr('Демо-вход','Demo session','Demo kirish'):profile.provider==='google'?'Вход через Google':'Вход по email'}</p><button class="button" type="button" data-auth="logout">Выйти из аккаунта</button></div></form></div></section>`;
+  return `<section class="profile-page"><header class="heading-row"><div><h1 id="main-content">Профиль</h1><p>Ваш аккаунт и магазин</p></div></header><div class="profile-layout"><div class="profile-summary"><span class="avatar profile-avatar">${esc(profile?.name?.slice(0,1)||'Д')}</span><h2>${esc(profile?.name||'Дилшод Каримов')}</h2><p class="muted">${esc(profile?.email||'')}</p><p class="meta">${profile.role==='seller'?'Продавец':'Покупатель'} · Ташкент</p></div><form id="profile-form" class="profile-form">${authError?`<p class="negative" role="alert">${esc(authError)}</p>`:''}<label>Имя<input name="name" required maxlength="80" value="${esc(profile?.name||'Дилшод Каримов')}"></label><label>Email<input name="email" type="email" readonly value="${esc(profile?.email||'')}"></label><label>Название магазина<input name="store" required maxlength="100" value="${esc(profile?.store||'Магазин Дилшода')}"></label><button class="button primary" type="submit">Сохранить профиль</button><div class="oauth-section"><p class="meta">${profile.provider==='demo'?'':profile.provider==='google'?'Вход через Google':'Вход по email'}</p><button class="button" type="button" data-auth="logout">Выйти из аккаунта</button></div></form></div></section>`;
 }
 document.addEventListener('click', event => {
   const settings=event.target.closest('[data-settings]');
