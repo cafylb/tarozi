@@ -15,13 +15,31 @@ const sampleStores=[
  {id:'korzinka-salom',name:'Korzinka · Салом',address:'ул. Буюк Ипак Йули, 158А',lat:41.327699,lng:69.343327,factor:1.01,source:'https://orgcatalog.com/orgs/korzinka-salom/'},
  {id:'korzinka-kuyluk',name:'Korzinka · Куйлюк',address:'ул. Мунис, Куйлюк-1',lat:41.244809,lng:69.310902,factor:1.00,source:'https://www.findlatitudeandlongitude.com/l/Korzinka.uz%2C%2BMunis%2Bstreet%2C%2BQo%27yliq%2B1%2Bmavzesi%2C%2BMirobod%2Btumani%2C%2BTashkent%2C%2B100000%2C%2BUzbekistan/5851778/gps-coordinates-converter/'},
  {id:'korzinka-amore',name:'Korzinka · Amore Mio',address:'Ташкент · Amore Mio',lat:41.306428,lng:69.291224,factor:1.13,source:'https://commons.wikimedia.org/wiki/File:Korzinka_Amore_Mio_supermarketi.jpg'},
- {id:'korzinka-yunusabad',name:'Korzinka · Юнусабад',address:'Юнусабад, Ташкент',lat:41.36940,lng:69.26561,factor:1.045,source:'https://uz.geoview.info/korzinka,11455129821n'}
+ {id:'korzinka-yunusabad',name:'Korzinka · Юнусабад',address:'Юнусабад, Ташкент',lat:41.36940,lng:69.26561,factor:1.045,source:'https://uz.geoview.info/korzinka,11455129821n'},
+ {id:'korzinka-karasu2',name:'Korzinka · Карасу-2',address:'Карасу-2, Ташкент',lat:41.332448,lng:69.364147,factor:1.065,source:'https://orgcatalog.com/en/orgs/korzinka-karasu-2/'},
+ {id:'korzinka-mashhadiy',name:'Korzinka · Машхадий',address:'ул. Мирзо Улугбека, 10',lat:41.312803,lng:69.314416,factor:1.095,source:'https://orgcatalog.com/en/orgs/korzinka-mashhadiy/'},
+ {id:'korzinka-oltintepa',name:'Korzinka · Олтинтепа',address:'ул. Олтинтепа, 3А/1',lat:41.312744,lng:69.330206,factor:1.075,source:'https://orgcatalog.com/en/orgs/korzinka-oltintepa/'},
+ {id:'korzinka-beruniy',name:'Korzinka · Беруний',address:'ул. Фароби, 28/6',lat:41.34648,lng:69.2061,factor:1.025,source:'https://mapcarta.com/W685675146'},
+ {id:'korzinka-sergeli',name:'Korzinka · Сергели',address:'ул. Кургантепа, Сергели',lat:41.19939,lng:69.21127,factor:.98,source:'https://uz.geoview.info/korzinka,6393717370n'},
+ {id:'korzinka-airport',name:'Korzinka · Аэропорт',address:'Кичик Халка Йули, Ташкент',lat:41.26997,lng:69.26266,factor:1.085,source:'https://mapcarta.com/N1807867306'},
+ {id:'family-yalangach',name:'Family Market · Ялангач',address:'Ялангач, Мирзо-Улугбекский район',lat:41.347062,lng:69.345155,factor:.97,source:'https://orgcatalog.com/en/orgs/family-market-yalangach/'},
+ {id:'olma-yalangach',name:'Olma · Ялангач',address:'Ялангач, Ташкент',lat:41.347193,lng:69.344316,factor:1.035,source:'https://narxbozor.uz/orgs/olma-yalangach/'}
 ];
 let marketCatalog={stores:[],items:[]},catalogError='',sellerItems=[],sellerStats=null,sellerError='',sellerBusy=false,sellerLoading=false,authRole='buyer',demoSession=false,editingItem=null,sellerDraft=null,storeDraft=null,selectedStore='',storeFilter='all',storeQuery='',storeLocation=null,searchTimer;
 const tr=(ru,en,uz)=>language==='en'?en:language==='uz'?uz:ru;
 const productLabel=product=>language==='ru'?product.name:(TRANSLATIONS[product.name]?.[language==='uz'?1:0]||product.name);
+const demoHistoryCache=new Map();
 function sampleHistory(product,index){
- return Array.from({length:31},(_,day)=>{const position=Math.max(0,(day-2)/2),start=Math.min(14,Math.floor(position)),end=Math.min(14,start+1),fraction=position-start;const base=product.month[start]*(1-fraction)+product.month[end]*fraction;return Math.round((base*sampleStores[index].factor+Math.sin(day*.6+index)*90*(30-day)/30)/50)*50;});
+ const key=product.id+':'+index;if(demoHistoryCache.has(key))return demoHistoryCache.get(key);
+ const seed=products.indexOf(product)*17+index*11+3,base=Math.min(...product.prices),factor=sampleStores[index].factor;
+ const values=Array.from({length:31},(_,day)=>{
+  const position=Math.max(0,(day-2)/2),start=Math.min(14,Math.floor(position)),end=Math.min(14,start+1),fraction=position-start;
+  const market=product.month[start]*(1-fraction)+product.month[end]*fraction;
+  const trend=(1-day/30)*base*((seed%9)-4)*.018;
+  const wave=Math.sin(day/(2+seed%4)+seed)*base*(.012+(seed%5)*.004);
+  const promotion=(day>=5+seed%12&&day<=9+seed%12)?-base*(.025+(seed%4)*.012):0;
+  return Math.max(50,Math.round((market*factor+trend+wave+promotion)/50)*50);
+ });demoHistoryCache.set(key,values);return values;
 }
 function sampleStoresFor(product){return sampleStores.filter((_,index)=>product.id==='rice'||index!==3);}
 function productOffers(product){
@@ -29,11 +47,11 @@ function productOffers(product){
  return [...samples,...marketCatalog.items.filter(item=>item.productId===product.id&&item.stock>0).map(item=>({...item,demo:false,history:item.history?.length>1?item.history.map(point=>point.price):null,dates:item.history?.map(point=>new Intl.DateTimeFormat(language,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(point.date)))}))].sort((a,b)=>a.price-b.price);
 }
 function meanHistory(product){const histories=sampleStoresFor(product).map(store=>sampleHistory(product,sampleStores.indexOf(store)));return Array.from({length:31},(_,day)=>Math.round(histories.reduce((sum,history)=>sum+history[day],0)/histories.length));}
-function graph(key){return `<div class="analytics-chart" data-analytics-chart="${key}"></div>`;}
+function graph(key){const chart=`<div class="analytics-chart" data-analytics-chart="${key}"></div>`;return key==='comparison'?`<div class="chart-scroll">${chart}</div>`:chart;}
 function chartPanel(title,key,sub=''){
  const stores=sampleStoresFor(activeProduct()).slice(0,4);
  const legend=key==='stores-history'?`<div class="chart-legend">${stores.map((store,index)=>`<span><i style="background:${['var(--accent)','#00bdb4','var(--ink)','var(--muted)'][index]}"></i>${esc(store.name)}</span>`).join('')}</div>`:'';
- return `<section class="analytics-panel"><div class="panel-title"><h2>${title}</h2>${sub?`<span class="meta">${sub}</span>`:''}</div>${graph(key)}${legend}</section>`;
+ return `<section class="analytics-panel analytics-panel-${key}"><div class="panel-title"><h2>${title}</h2>${sub?`<span class="meta">${sub}</span>`:''}</div>${graph(key)}${legend}</section>`;
 }
 function productStatsView(){
  return `<div class="product-stats-heading"><button class="text-button" data-action="view" data-view="alerts">${icon('arrow-left')}${tr('Оповещения','Price alerts','Narx xabarlari')}</button><h1 id="main-content">${esc(productLabel(activeProduct()))}</h1></div>${marketInsights()}`;
@@ -62,9 +80,9 @@ function mountCommerce(){
  drawInsightCharts();
 }
 function drawInsightCharts(){
- const product=activeProduct(),history=meanHistory(product),offers=productOffers(product),dates=history.map((_,index)=>String(index+1)),unit=tr('сум','UZS','so‘m');
- const definitions={average:{labels:dates,series:[{name:tr('Средняя','Average','O‘rtacha'),values:history}]},comparison:{type:'bar',labels:offers.map(offer=>offer.store.replace('Korzinka · ','')),series:[{name:tr('Цена','Price','Narx'),values:offers.map(offer=>offer.price)}]},'stores-history':{labels:dates,series:sampleStoresFor(product).slice(0,4).map(store=>({name:store.name,values:sampleHistory(product,sampleStores.indexOf(store))}))},daily:{type:'bar',unit:'%',labels:dates.slice(1),series:[{name:tr('Изменение','Change','O‘zgarish'),values:history.slice(1).map((value,index)=>Number(((value/history[index]-1)*100).toFixed(2)))}]},demand:{type:'bar',unit:'',labels:products.map(product=>language==='ru'?product.short:productLabel(product)),series:[{name:tr('Поиски','Searches','Qidiruvlar'),values:products.map(product=>sellerStats?.demand.find(row=>row.productId===product.id)?.count||0)}]},searches:{unit:'',labels:sellerStats?.days.map(day=>day.slice(5))||[''],series:[{name:tr('Поиски','Searches','Qidiruvlar'),values:sellerStats?.searches||[0]}]},views:{unit:'',labels:sellerStats?.days.map(day=>day.slice(5))||[''],series:[{name:tr('Просмотры','Views','Ko‘rishlar'),values:sellerStats?.views||[0]}]},'market-prices':{type:'bar',labels:products.map(product=>language==='ru'?product.short:productLabel(product)),series:[{name:tr('Средняя цена','Average price','O‘rtacha narx'),values:products.map(product=>meanHistory(product).at(-1))}]}};
- document.querySelectorAll('[data-analytics-chart]').forEach(element=>{if(element.dataset.drawn)return;const key=element.dataset.analyticsChart;let options=definitions[key];if(key.startsWith('offer:')){const offer=offers[Number(key.split(':')[1])];options={labels:offer.dates||dates,series:[{name:offer.store,values:offer.history}]};}if(!options)return;element.dataset.drawn='true';Charts.line(element,{locale:language,unit,type:'line',yTicks:[],...options});});
+ const product=activeProduct(),history=meanHistory(product),offers=productOffers(product),dates=history.map((_,index)=>String(index+1)+' '+tr('окт','Oct','okt')),unit=tr('сум','UZS','so‘m');
+ const definitions={average:{type:'area',labels:dates,series:[{name:tr('Средняя','Average','O‘rtacha'),values:history}]},comparison:{type:'horizontal-bar',highlightIndex:0,labels:offers.map(offer=>offer.store.replace('Korzinka · ','')),series:[{name:tr('Цена','Price','Narx'),values:offers.map(offer=>offer.price)}]},'stores-history':{labels:dates,series:sampleStoresFor(product).slice(0,4).map(store=>({name:store.name,values:sampleHistory(product,sampleStores.indexOf(store))}))},daily:{type:'bar',unit:'%',labels:dates.slice(1),series:[{name:tr('Изменение','Change','O‘zgarish'),values:history.slice(1).map((value,index)=>Number(((value/history[index]-1)*100).toFixed(2)))}]},demand:{type:'bar',unit:'',labels:products.map(product=>language==='ru'?product.short:productLabel(product)),series:[{name:tr('Поиски','Searches','Qidiruvlar'),values:products.map(product=>sellerStats?.demand.find(row=>row.productId===product.id)?.count||0)}]},searches:{unit:'',labels:sellerStats?.days.map(day=>day.slice(5))||[''],series:[{name:tr('Поиски','Searches','Qidiruvlar'),values:sellerStats?.searches||[0]}]},views:{unit:'',labels:sellerStats?.days.map(day=>day.slice(5))||[''],series:[{name:tr('Просмотры','Views','Ko‘rishlar'),values:sellerStats?.views||[0]}]},'market-prices':{type:'bar',labels:products.map(product=>language==='ru'?product.short:productLabel(product)),series:[{name:tr('Средняя цена','Average price','O‘rtacha narx'),values:products.map(product=>meanHistory(product).at(-1))}]}};
+ document.querySelectorAll('[data-analytics-chart]').forEach(element=>{if(element.dataset.drawn)return;const key=element.dataset.analyticsChart;let options=definitions[key];if(key.startsWith('offer:')){const offer=offers[Number(key.split(':')[1])];options={type:['area','line','bar'][Number(key.split(':')[1])%3],labels:offer.dates||dates,series:[{name:offer.store,values:offer.history}]};}if(!options)return;element.dataset.drawn='true';if(key==='comparison')element.style.height=Math.max(310,offers.length*25+35)+'px';Charts.line(element,{locale:language,unit,type:'line',yTicks:[],...options});});
 }
 async function loadCatalog(){try{if(demoSession){marketCatalog={stores:[],items:[]};catalogError='';}else{const response=await fetch('/api/market/catalog');if(!response.ok)throw Error();const data=await response.json();if(!Array.isArray(data.items)||!Array.isArray(data.stores))throw Error();marketCatalog=data;catalogError='';}}catch{catalogError='unavailable';}if(demoSession){const items=readDemoItems(),store=readDemoStore();marketCatalog.items=[...marketCatalog.items.filter(item=>item.storeId!=='demo-seller'),...items.filter(item=>item.stock>0).map(item=>({...item,storeId:'demo-seller',store:store.store||tr('Демо-магазин','Demo store','Demo do‘kon')}))];marketCatalog.stores.push({id:'demo-seller',name:store.store||tr('Демо-магазин','Demo store','Demo do‘kon'),address:store.address||'',lat:store.lat,lng:store.lng});}refresh();}
 function readDemoStore(){try{return JSON.parse(localStorage.getItem('tarozi-demo-store')||'{}');}catch{return {};}}

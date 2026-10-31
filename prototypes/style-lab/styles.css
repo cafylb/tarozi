@@ -440,7 +440,7 @@ kbd { border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; line-
 .price-chart-tooltip {background:var(--ui-bg);border:1px solid var(--border);border-radius:9px;padding:11px 13px;box-shadow:0 4px 14px #00000012;font-size:12px;color:var(--ui-fg);}
 .price-chart-tooltip>strong {font-weight:500;display:block;margin-bottom:7px;}
 .price-chart-tooltip>div {display:flex;align-items:center;gap:7px;color:var(--ui-fg-muted);}
-.price-chart-tooltip>div>span {width:6px;height:6px;border-radius:50%;}
+.price-chart-tooltip>div>span:first-child {width:6px;height:6px;border-radius:50%;}
 .price-chart-tooltip b {font-weight:500;color:var(--ui-fg);margin-left:8px;}
 @media(max-width:480px){.chart-range{gap:8px;}.chart-type-label{gap:5px;}.chart-type-label select{font-size:12px;max-width:88px;}.range-buttons{gap:10px;}.chart-type-label>span:last-child{font-size:11px;}}
 
@@ -573,3 +573,7 @@ kbd { border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; line-
 .chart-legend{display:flex;flex-wrap:wrap;gap:10px 16px;color:var(--muted);font-size:11px;padding:10px 5px 2px;}.chart-legend>span{display:flex;align-items:center;gap:6px;}.chart-legend i{width:14px;height:2px;display:block;}.google-entry img{flex:none;object-fit:contain;}
 
 .alert-product-link{display:inline-flex;align-items:center;gap:12px;text-align:left;padding:6px 0;min-height:36px;font:inherit;color:inherit;background:none;border:0;}.alert-product-link .icon{color:var(--accent);width:16px;height:16px;}.alert-product-link:hover{text-decoration:underline;text-underline-offset:4px;}.product-stats-heading{display:flex;flex-direction:column;align-items:flex-start;gap:22px;}.product-stats-heading+.market-insights{margin-top:24px;}
+
+.price-chart-tooltip .tooltip-series{flex:1;min-width:0;overflow-wrap:anywhere;}.price-chart-tooltip{max-width:340px;border-radius:12px;padding:13px 15px;box-shadow:0 8px 28px #00000012;}.price-chart-tooltip>div{padding:3px 0;}.price-chart-tooltip b{white-space:nowrap;font-variant-numeric:tabular-nums;}.tooltip-delta{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);color:var(--muted);font-size:11px;}.analytics-panel{background:var(--surface);}.analytics-panel-average .analytics-chart{height:265px;}.store-offer .analytics-chart{height:165px;}.store-offer-value strong{letter-spacing:-.035em;}.recharts-cartesian-axis-tick text{font-variant-numeric:tabular-nums;}@media(max-width:760px){.price-chart-tooltip{max-width:290px;font-size:11px;}.analytics-panel-average .analytics-chart{height:220px;}}
+
+.chart-scroll{max-height:265px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--control) transparent;}
