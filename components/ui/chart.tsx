@@ -29,7 +29,11 @@ export default function Chart({data,xKey,series,type='line',ticks,locale='ru',un
  const domain:[number,number]|undefined=bars?undefined:ticks?.length?[ticks[0],ticks[ticks.length-1]]:values.length?[Math.floor(low-padding),Math.ceil(high+padding)]:[0,1];
  const numericAxis={axisLine:false,tickLine:false,tick:{fontSize:11,fill:'var(--ui-fg-muted)'},allowDecimals:unit!=='',tickFormatter:short};
  const name=(label:unknown)=>String(label).length>20?String(label).slice(0,19)+'…':String(label);
- return <div ref={host} className="chart-viewport" data-draw={draw}><ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{width:500,height:240}}>
+ return <div ref={host} className="chart-viewport" data-draw={draw}
+  onPointerDownCapture={event=>{event.currentTarget.dataset.pointerFocus='true';}}
+  onKeyDownCapture={event=>{delete event.currentTarget.dataset.pointerFocus;}}
+  onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget))delete event.currentTarget.dataset.pointerFocus;}}
+ ><ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{width:500,height:240}}>
   <Container data={data} layout={horizontal?'vertical':'horizontal'} margin={{top:14,right:horizontal?28:12,bottom:3,left:0}} accessibilityLayer>
    <defs><linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--ui-primary)" stopOpacity={.2}/><stop offset="100%" stopColor="var(--ui-primary)" stopOpacity={.015}/></linearGradient></defs>
    <CartesianGrid stroke="var(--ui-border)" strokeDasharray="3 5" vertical={horizontal} horizontal={!horizontal}/>
