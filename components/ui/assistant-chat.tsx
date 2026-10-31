@@ -12,10 +12,10 @@ const copy={
 export interface AssistantProps {language:'ru'|'en'|'uz';names:Record<string,string>;target:HTMLElement|null}
 export default function AssistantChat({language,names,target}:AssistantProps) {
  const t=copy[language]||copy.ru;
- const [draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[mode,setMode]=useState('catalog'),[messages,setMessages]=useState<Message[]>([]);
+ const [draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[messages,setMessages]=useState<Message[]>([]);
  const input=useRef<HTMLTextAreaElement>(null),bottom=useRef<HTMLDivElement>(null),controller=useRef<AbortController|null>(null),lastQuery=useRef('');
  const number=(value:number)=>new Intl.NumberFormat(language).format(value);
- useEffect(()=>{const abort=new AbortController();fetch('/api/assistant',{signal:abort.signal}).then(response=>response.json()).then(data=>setMode(data.mode==='ai'?'ai':'catalog')).catch(()=>{});return()=>{abort.abort();controller.current?.abort();};},[]);
+ useEffect(()=>()=>controller.current?.abort(),[]);
  useEffect(()=>{if(target)input.current?.focus({preventScroll:true});},[target]);
  useEffect(()=>{if(bottom.current&&target){const log=bottom.current.parentElement;if(log)log.scrollTop=log.scrollHeight;}},[messages,busy,target]);
  async function send(value:string) {
@@ -26,7 +26,7 @@ export default function AssistantChat({language,names,target}:AssistantProps) {
   try{
    const response=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,language,history}),signal:controller.current.signal});
    if(!response.ok)throw new Error('REQUEST_FAILED');
-   const data=await response.json();setMode(data.mode==='ai'?'ai':'catalog');
+   const data=await response.json();
    const text=[data.notice?t.quota:'',data.answer||t.notice,data.quantityIssue?t.minimum:''].filter(Boolean).join('\n\n');
    setMessages(previous=>[...previous,{role:'assistant',text,offers:Array.isArray(data.offers)?data.offers:[],mode:data.mode}]);
   }catch{setMessages(previous=>[...previous,{role:'assistant',text:t.offline,error:true}]);}
@@ -34,16 +34,15 @@ export default function AssistantChat({language,names,target}:AssistantProps) {
  }
  function choose(offer:Offer){document.dispatchEvent(new CustomEvent('tarozi:offer',{detail:{productId:offer.productId,supplierId:offer.supplierId,quantity:offer.quantity}}));}
  if(!target)return null;
- return createPortal(<section className="chat-page" aria-labelledby="assistant-title">
+ return createPortal(<section className="chat-page" aria-label={t.title}>
    <div className="assistant-panel">
-    <header className="assistant-heading"><span className="assistant-mark" aria-hidden="true"><Robot size={28} weight="duotone"/></span><div><h1 id="assistant-title">{t.title}</h1><p>{t.subtitle}</p></div></header>
+    <h1 className="sr-only">{t.title}</h1>
     <div className="assistant-messages" aria-live="polite" aria-relevant="additions text" role="log">
-     {!messages.length&&<section className="assistant-welcome"><div className="assistant-robot-logo" aria-hidden="true"><Robot size={54} weight="duotone"/></div><h3>{t.welcome}</h3><p>{t.intro}</p><div className="assistant-prompts">{t.prompts.map(prompt=><button type="button" key={prompt} onClick={()=>send(prompt)}>{prompt}<ArrowUpRight size={17} aria-hidden="true"/></button>)}</div></section>}
+     {!messages.length&&<section className="assistant-welcome"><div className="assistant-robot-logo" aria-hidden="true"><Robot size={54} weight="duotone"/></div><h2>{t.welcome}</h2><div className="assistant-prompts">{t.prompts.map(prompt=><button type="button" key={prompt} onClick={()=>send(prompt)}>{prompt}<ArrowUpRight size={17} aria-hidden="true"/></button>)}</div></section>}
      {messages.map((message,index)=><article key={index} className={`assistant-message ${message.role}`}><div className="assistant-message-text">{message.text}</div>{message.offers?.map((offer,offerIndex)=><section className="assistant-offer" key={`${offer.productId}-${offer.supplierId}`}><div className="assistant-offer-top"><span>{names[offer.productId]||offer.productName}</span><span className="num">{offer.quantity} {offer.unit==='кг'?'kg':language==='ru'?'л':'l'}</span></div><h3>{offer.supplierName}</h3><p>{offer.market} · {number(offer.price)} {t.each} / {offer.unit==='кг'?'kg':language==='ru'?'л':'l'}</p><div className="assistant-offer-cost"><span>{t.delivery}</span><span className="num">{number(offer.delivery)} {t.each}</span></div><div className="assistant-offer-total"><span>{t.total}</span><strong className="num">{number(offer.total)} {t.each}</strong></div><button type="button" onClick={()=>choose(offer)}>{t.view}<ArrowUpRight size={17} aria-hidden="true"/></button>{offerIndex===0&&<span className="sr-only">{t.total}</span>}</section>)}{message.error&&<button type="button" className="text-button" onClick={()=>send(lastQuery.current)} disabled={busy}>{t.retry}</button>}</article>)}
      {busy&&<p className="assistant-thinking" role="status"><SpinnerGap size={16} className="assistant-spinner" aria-hidden="true"/>{t.thinking}</p>}<div ref={bottom}/>
     </div>
     <form className="assistant-compose" onSubmit={event=>{event.preventDefault();send(draft);}}><label className="sr-only" htmlFor="assistant-input">{t.placeholder}</label><textarea ref={input} id="assistant-input" value={draft} onChange={event=>setDraft(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();send(draft);}}} placeholder={t.placeholder} maxLength={2000} rows={2} enterKeyHint="send"/><button type="submit" aria-label={t.send} disabled={!draft.trim()||busy}><ArrowUp size={21} weight="bold" aria-hidden="true"/></button></form>
-    <footer className="assistant-status"><span>{mode==='ai'?t.ai:t.catalog}</span><small>{t.demo}</small></footer>
    </div>
  </section>,target);
 }

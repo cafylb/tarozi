@@ -144,7 +144,7 @@ function pageBody(style) {
 }
 
 const variants = [
-  () => `<div class="app studio" data-ui><header class="studio-top">${wordmark()}<nav class="studio-nav" aria-label="Главная навигация">${navigationButtons('top')}</nav><div class="account"><div class="person-name">Магазин Дилшода<small>Ташкент</small></div><span class="avatar">Д</span></div></header><main class="studio-canvas">${pageBody('studio')}${footer()}</main></div>`
+  () => `<div class="app studio" data-ui><header class="studio-top">${wordmark()}<nav class="studio-nav" aria-label="Главная навигация">${navigationButtons('top')}</nav><div class="account"><div class="person-name">Магазин Дилшода<small>Ташкент</small></div><span class="avatar">Д</span></div></header><main class="studio-canvas">${pageBody('studio')}${state.page==='chat'?'':footer()}</main></div>`
 ];
 
 function drawCharts() {
